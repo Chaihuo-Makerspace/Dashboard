@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>柴火数字基地车移动数据中心 (Chaihuo Mobile Data Center)</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <!-- ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/map/js/china.js"></script>
+
+  <!-- Custom Scripts for Map Animation -->
+  <!-- Note: Move these to end of body to ensure DOM is ready -->
+
+  <style>
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background-color: #050914;
+      color: #e2e8f0;
+      margin: 0;
+      overflow: hidden;
+      /* Subtle grid background */
+      background-image: 
+        linear-gradient(to right, rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    
+    .font-mono {
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    /* Main Grid Layout */
+    #dashboard {
+      display: grid;
+      grid-template-columns: 3fr 5.5fr 3fr;
+      grid-template-rows: repeat(12, 1fr);
+      gap: 1.5rem;
+      height: calc(100vh - 40px); /* Leave 40px for footer */
+      padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+      box-sizing: border-box;
+    }
+
+    /* Panel Positions */
+    .panel-tl { grid-column: 1; grid-row: 1 / span 6; }
+    .panel-bl { grid-column: 1; grid-row: 7 / span 6; }
+    .panel-ct { grid-column: 2; grid-row: 1 / span 8; }
+    .panel-cb { grid-column: 2; grid-row: 9 / span 4; }
+    .panel-tr { grid-column: 3; grid-row: 1 / span 4; }
+    .panel-rm { grid-column: 3; grid-row: 5 / span 3; }
+    .panel-br { grid-column: 3; grid-row: 8 / span 5; }
+
+    /* Panel Styling */
+    .panel {
+      background: rgba(11, 20, 38, 0.7);
+      border: 1px solid rgba(34, 211, 238, 0.2);
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.05), inset 0 0 20px rgba(0, 150, 255, 0.05);
+      backdrop-filter: blur(10px);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Decorative glowing corners */
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 15px; height: 15px;
+      border-top: 2px solid #22d3ee;
+      border-left: 2px solid #22d3ee;
+      border-top-left-radius: 8px;
+      box-shadow: -2px -2px 5px rgba(34, 211, 238, 0.5);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .panel::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; right: -1px;
+      width: 15px; height: 15px;
+      border-bottom: 2px solid #22d3ee;
+      border-right: 2px solid #22d3ee;
+      border-bottom-right-radius: 8px;
+      box-shadow: 2px 2px 5px rgba(34, 211, 238, 0.5);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .panel-title {
+      color: #22d3ee;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid rgba(34, 211, 238, 0.2);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .glassy-frame {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+    }
+
+    /* Custom Scrollbar for inner overflow if any */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(34, 211, 238, 0.3);
+      border-radius: 4px;
+    }
+
+    @keyframes clusterScan {
+      0% { background-position: 0% 0%, 50% 50%, 50% 50%; }
+      100% { background-position: 220% 180%, 50% 50%, 50% 50%; }
+    }
+
+    @keyframes clusterGlow {
+      0%, 100% { opacity: 0.25; }
+      50% { opacity: 0.55; }
+    }
+
+    .cluster-panel-anim {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+      background-image:
+        url('./cluster-anim.svg'),
+        radial-gradient(closest-side at 70% 30%, rgba(34, 211, 238, 0.18), transparent 60%),
+        radial-gradient(closest-side at 20% 70%, rgba(96, 165, 250, 0.14), transparent 62%);
+      background-size: 300px 300px, 120% 120%, 120% 120%;
+      background-repeat: repeat, no-repeat, no-repeat;
+      mix-blend-mode: screen;
+      filter: blur(0.2px);
+      animation: clusterScan 7s linear infinite;
+    }
+
+    .cluster-panel-anim::after {
+      content: '';
+      position: absolute;
+      inset: -30%;
+      background: conic-gradient(from 0deg, transparent, rgba(34, 211, 238, 0.10), transparent, rgba(96, 165, 250, 0.08), transparent);
+      animation: clusterGlow 2.8s ease-in-out infinite;
+    }
+
+    @keyframes tempAlertPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(248, 113, 113, 0); }
+      50% { box-shadow: 0 0 18px rgba(248, 113, 113, 0.35), inset 0 0 14px rgba(248, 113, 113, 0.18); }
+    }
+
+    @keyframes tempTextBlink {
+      0%, 100% { opacity: 0.75; }
+      50% { opacity: 1; }
+    }
+
+    .temp-card.alert {
+      border-color: rgba(248, 113, 113, 0.55) !important;
+      animation: tempAlertPulse 1s ease-in-out infinite;
+    }
+
+    .temp-card.alert .temp-value {
+      color: #f87171;
+    }
+
+    .temp-card.alert .temp-status {
+      color: #fecaca;
+      animation: tempTextBlink 0.9s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="dashboard">
+    
+    <!-- 1. 左上 (环境传感器数据) -->
+    <div class="panel panel-tl p-4">
+      <div class="panel-title">
+        <i class="fas fa-leaf text-cyan-400"></i> 环境传感器数据 (ENVIRONMENTAL SENSOR DATA)
+      </div>
+      <div class="flex justify-between items-center mb-4 bg-black/30 p-2 rounded border border-white/5">
+        <div class="flex items-center gap-2 text-lg text-white font-bold">
+          <i class="fas fa-cloud-sun text-yellow-400 text-2xl"></i> 深圳南山区
+        </div>
+        <div class="flex items-center gap-2 text-white">
+          <span class="text-green-400 text-xs border border-green-400 px-1 py-0.5 rounded shadow-[0_0_5px_#4ade80]">优</span>
+          <span class="font-mono text-lg">12</span> <span class="text-xs text-gray-400">µg/m³ PM2.5</span>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 flex-1 min-h-0">
+        <!-- 温度 -->
+        <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 flex flex-col relative group hover:border-cyan-500/50 transition">
+          <div class="text-xs text-cyan-300/80 mb-1">温度 (Temperature)</div>
+          <div class="text-4xl font-bold text-white font-mono tracking-wider">21.5<span class="text-lg text-cyan-500">°C</span></div>
+          <div id="tempChart" class="flex-1 w-full mt-2 min-h-0"></div>
+        </div>
+        <!-- 湿度 -->
+        <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 flex flex-col relative group hover:border-cyan-500/50 transition">
+          <div class="text-xs text-cyan-300/80 mb-1">湿度 (Humidity)</div>
+          <div class="text-4xl font-bold text-white font-mono tracking-wider absolute top-3 right-3 z-10">45<span class="text-lg text-cyan-500">%</span></div>
+          <div id="humChart" class="flex-1 w-full min-h-0 -mt-4"></div>
+        </div>
+        <!-- 气压与海拔 -->
+        <div class="col-span-2 bg-blue-900/20 p-4 rounded border border-blue-500/20 flex justify-between items-center relative overflow-hidden group hover:border-cyan-500/50 transition">
+          <div class="absolute right-0 top-0 opacity-10"><i class="fas fa-mountain text-8xl"></i></div>
+          <div class="z-10">
+            <div class="text-xs text-cyan-300/80 mb-1">气压 (Pressure)</div>
+            <div class="text-3xl font-bold text-white font-mono">720 <span class="text-sm text-cyan-500">hPa</span></div>
+          </div>
+          <div class="h-10 w-px bg-cyan-500/30 z-10"></div>
+          <div class="text-right z-10">
+            <div class="text-xs text-cyan-300/80 mb-1">海拔 (Altitude)</div>
+            <div class="text-3xl font-bold text-white font-mono flex items-center justify-end gap-2">
+              <i class="fas fa-arrow-up text-cyan-400 text-sm"></i> 3600<span class="text-sm text-cyan-500">m+</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 左下 (AI 共创项目进度) -->
+    <div class="panel panel-bl p-4">
+      <div class="panel-title">
+        <i class="fas fa-network-wired text-cyan-400"></i> AI 共创项目进度 (AI CO-CREATION PROGRESS)
+      </div>
+      
+      <div class="flex flex-col gap-4 flex-1 min-h-0">
+        <!-- 项目 1 -->
+        <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 group hover:bg-blue-900/30 transition">
+          <div class="flex justify-between items-end mb-1">
+            <div class="text-sm text-white font-bold tracking-wide">高原居民人脸分析</div>
+            <div class="text-xs text-cyan-400 border border-cyan-400 px-1.5 py-0.5 rounded shadow-[0_0_5px_rgba(34,211,238,0.3)]">进行中</div>
+          </div>
+          <div class="text-[10px] text-gray-400 mb-3">Plateau Residents Face Analysis</div>
+          <div class="w-full bg-gray-800/80 h-2 rounded-full overflow-hidden mb-2 border border-gray-700">
+            <div class="bg-cyan-400 h-full shadow-[0_0_10px_#22d3ee] relative">
+              <div class="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
+            </div>
+          </div>
+          <div class="flex justify-between text-xs text-gray-300">
+            <span class="font-mono text-cyan-200">60%</span>
+            <span>样本采集数: <span class="text-cyan-300 font-mono font-bold">1250</span></span>
+          </div>
+        </div>
+
+        <!-- 项目 2 -->
+        <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 group hover:bg-blue-900/30 transition">
+          <div class="flex justify-between items-end mb-1">
+            <div class="text-sm text-white font-bold tracking-wide">智能仓储管理</div>
+            <div class="text-xs text-green-400 border border-green-400 px-1.5 py-0.5 rounded shadow-[0_0_5px_rgba(74,222,128,0.3)]">已完成</div>
+          </div>
+          <div class="text-[10px] text-gray-400 mb-3">Smart Warehouse Management</div>
+          <div class="w-full bg-gray-800/80 h-2 rounded-full overflow-hidden mb-2 border border-gray-700">
+            <div class="bg-green-400 h-full shadow-[0_0_10px_#4ade80]" style="width: 100%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-gray-300">
+            <span class="font-mono text-green-200">100%</span>
+            <span>管理项数: <span class="text-green-300 font-mono font-bold">450</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最新故事摘要 -->
+      <div class="mt-4">
+        <div class="text-xs text-cyan-400/80 mb-2 border-b border-cyan-500/20 pb-1 flex items-center gap-1"><i class="fas fa-book-open"></i> 最新故事摘要</div>
+        <div class="flex gap-3 items-center bg-black/40 p-2.5 rounded border border-white/5 hover:border-cyan-500/30 transition cursor-pointer group">
+          <div class="w-16 h-16 rounded overflow-hidden flex-shrink-0 border border-gray-600 relative">
+            <div class="absolute inset-0 bg-cyan-500/20 group-hover:bg-transparent transition z-10"></div>
+            <img src="https://picsum.photos/seed/chaihuo-story/150/150" class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500" alt="story">
+          </div>
+          <div class="flex-1">
+            <div class="text-sm text-white font-bold flex items-center gap-1 mb-1"><i class="fas fa-map-marker-alt text-red-500"></i> 敦煌 (Dunhuang)</div>
+            <div class="text-xs text-gray-400 leading-relaxed line-clamp-2">在沙漠腹地测试无人设备的耐高温性能，记录了极限环境下的设备运行数据与沿途绝美风光。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 中央 (路径追踪图) -->
+    <div class="panel panel-ct p-0 border-cyan-500/50 shadow-[0_0_25px_rgba(0,255,255,0.1)]">
+      <div id="chinaMap" class="w-full h-full absolute inset-0 z-0"></div>
+      
+      <!-- Overlay Header -->
+      <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none p-4 flex justify-between items-start">
+        <div class="text-cyan-400 font-bold tracking-wider text-sm flex items-center gap-2 bg-black/60 px-3 py-2 rounded-lg border border-cyan-500/30 backdrop-blur-md shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+          <i class="fas fa-route"></i> 路径追踪图 (ROUTE TRACKING MAP)
+        </div>
+        
+        <!-- Status Card -->
+        <div class="bg-black/70 border border-cyan-500/50 backdrop-blur-md p-3 rounded-lg flex flex-col gap-2 shadow-[0_0_20px_rgba(34,211,238,0.2)] pointer-events-auto min-w-[240px]">
+          <div class="text-xs text-cyan-300 font-bold border-b border-cyan-500/30 pb-2 mb-1 flex items-center justify-between">
+            <span>移动基地实时状态</span>
+            <span class="text-[10px] bg-cyan-900/50 text-white px-1.5 py-0.5 rounded border border-cyan-500/50">200天环中旅程</span>
+          </div>
+          <div class="text-sm text-gray-300 flex items-center gap-2 justify-between">
+            <span class="flex items-center gap-2"><i class="fas fa-crosshairs text-cyan-400 w-4 text-center"></i> 当前位置</span>
+            <span id="currentLocText" class="text-white font-bold bg-cyan-900/30 px-2 py-0.5 rounded">出发点: 深圳</span>
+          </div>
+          <div class="text-sm text-gray-300 flex items-center gap-2 justify-between">
+            <span class="flex items-center gap-2"><i class="fas fa-clock text-cyan-400 w-4 text-center"></i> 存在</span>
+            <span class="text-cyan-300 font-mono font-bold text-base">5 <span class="text-xs text-gray-400 font-sans">天 (Days)</span></span>
+          </div>
+          <div class="text-sm text-gray-300 flex items-center gap-2 justify-between">
+            <span class="flex items-center gap-2"><i class="fas fa-book-open text-cyan-400 w-4 text-center"></i> 故事解锁</span>
+            <span class="text-yellow-400 font-mono font-bold text-base">12</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 中央下 (社区互动与反馈) -->
+    <div class="panel panel-cb p-4">
+      <div class="panel-title">
+        <i class="fas fa-comments text-cyan-400"></i> 社区互动与反馈 (COMMUNITY INTERACTION & FEEDBACK)
+      </div>
+      
+      <div class="flex h-full gap-4 min-h-0">
+        <!-- 线下照片 -->
+        <div class="flex-1 glassy-frame p-3 flex flex-col relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-transparent z-0"></div>
+          <div class="text-xs text-cyan-300/80 mb-2 z-10 flex justify-between items-center">
+            <span>线下照片轮播 (OFFLINE PHOTOS)</span>
+            <i class="fas fa-camera text-gray-500"></i>
+          </div>
+          <div class="flex gap-2 flex-1 items-center z-10">
+            <div class="flex-1 h-full rounded border border-white/10 overflow-hidden relative cursor-pointer hover:border-cyan-400 transition shadow-lg">
+              <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=200&q=80" class="w-full h-full object-cover opacity-60 hover:opacity-100 hover:scale-110 transition duration-500">
+            </div>
+            <div class="flex-1 h-full rounded border border-white/10 overflow-hidden relative cursor-pointer hover:border-cyan-400 transition shadow-lg">
+              <img src="https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?auto=format&fit=crop&w=200&q=80" class="w-full h-full object-cover opacity-60 hover:opacity-100 hover:scale-110 transition duration-500">
+            </div>
+            <div class="flex-1 h-full rounded border border-white/10 overflow-hidden relative cursor-pointer hover:border-cyan-400 transition shadow-lg">
+              <img src="https://picsum.photos/seed/chaihuo-offline-3/200/200" class="w-full h-full object-cover opacity-60 hover:opacity-100 hover:scale-110 transition duration-500">
+            </div>
+          </div>
+        </div>
+        
+        <!-- 线上评论 -->
+        <div class="flex-1 glassy-frame p-3 flex flex-col relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-bl from-blue-900/10 to-transparent z-0"></div>
+          <div class="text-xs text-cyan-300/80 mb-2 z-10 flex justify-between items-center">
+            <span>线上网友评论精选 (SOCIAL MEDIA)</span>
+            <i class="fas fa-hashtag text-gray-500"></i>
+          </div>
+          <div class="flex flex-col gap-2 flex-1 justify-between z-10 overflow-y-auto pr-1">
+            <div class="flex items-start gap-2 bg-black/40 p-2 rounded border border-white/5 hover:border-cyan-500/30 transition">
+              <img src="https://i.pravatar.cc/100?img=11" class="w-7 h-7 rounded-full border border-cyan-500 shadow-[0_0_5px_#22d3ee]">
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] text-cyan-400 font-bold">@TechExplorer <span class="text-gray-500 font-normal">· 2h ago</span></div>
+                <div class="text-xs text-gray-300 truncate">高原测试的数据太硬核了，期待基地的架构开源！</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 bg-black/40 p-2 rounded border border-white/5 hover:border-cyan-500/30 transition">
+              <img src="https://i.pravatar.cc/100?img=33" class="w-7 h-7 rounded-full border border-cyan-500 shadow-[0_0_5px_#22d3ee]">
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] text-cyan-400 font-bold">@MakerDaily <span class="text-gray-500 font-normal">· 5h ago</span></div>
+                <div class="text-xs text-gray-300 truncate">移动基地的算力集群设计很巧妙，J50和R2X搭配绝了。</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 bg-black/40 p-2 rounded border border-white/5 hover:border-cyan-500/30 transition">
+              <img src="https://i.pravatar.cc/100?img=68" class="w-7 h-7 rounded-full border border-cyan-500 shadow-[0_0_5px_#22d3ee]">
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] text-cyan-400 font-bold">@NatureNomad <span class="text-gray-500 font-normal">· 1d ago</span></div>
+                <div class="text-xs text-gray-300 truncate">沿途的风光配合数据监控，真正的赛博朋克游牧感拉满！</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 右上 (车载计算集群性能) -->
+    <div class="panel panel-tr p-4">
+      <div class="cluster-panel-anim" aria-hidden="true"></div>
+      <div class="panel-title relative z-10">
+        <i class="fas fa-server text-cyan-400"></i> 车载计算集群性能 (COMPUTING CLUSTER)
+      </div>
+      
+      <div class="flex flex-col gap-4 flex-1 justify-between min-h-0 relative z-10">
+        <!-- J50 -->
+        <div class="glassy-frame p-3 relative group">
+          <div class="absolute inset-0 bg-cyan-900/5 opacity-0 group-hover:opacity-100 transition rounded-lg"></div>
+          <div class="text-sm font-bold text-white mb-2 border-b border-cyan-500/20 pb-1.5 flex justify-between items-center relative z-10">
+            <span class="flex items-center gap-2"><i class="fas fa-microchip text-cyan-400 text-lg"></i> J50 Node</span>
+            <span class="text-xs text-green-400 flex items-center gap-1 bg-green-900/30 px-1.5 py-0.5 rounded border border-green-500/30">
+              <i class="fas fa-satellite-dish"></i> Starlink <span class="font-mono font-bold">35ms</span>
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-1 relative z-10">
+            <div class="text-center relative">
+              <div id="j50CpuChart" class="h-20 w-full"></div>
+              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">CPU <span class="font-mono text-cyan-400">78%</span></div>
+            </div>
+            <div class="text-center relative">
+              <div id="j50GpuChart" class="h-20 w-full"></div>
+              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">GPU <span class="font-mono text-cyan-400">92%</span></div>
+            </div>
+          </div>
+          <div class="relative z-10 px-1 mt-1">
+            <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+              <span>RAM 使用率</span>
+              <span class="font-mono text-yellow-400">18.1 / 32 GB</span>
+            </div>
+            <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden border border-gray-700">
+              <div class="bg-yellow-400 h-full shadow-[0_0_8px_#facc15]" style="width: 56%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- R2X -->
+        <div class="glassy-frame p-3 relative group">
+          <div class="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition rounded-lg"></div>
+          <div class="text-sm font-bold text-white mb-2 border-b border-blue-500/20 pb-1.5 flex justify-between items-center relative z-10">
+            <span class="flex items-center gap-2"><i class="fas fa-microchip text-blue-400 text-lg"></i> R2X Node</span>
+            <span class="text-xs text-blue-400 flex items-center gap-1 bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-500/30">
+              <i class="fas fa-broadcast-tower animate-pulse"></i> 5G <span class="font-mono font-bold">40ms</span>
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-1 relative z-10">
+            <div class="text-center relative">
+              <div id="r2xCpuChart" class="h-20 w-full"></div>
+              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">CPU <span class="font-mono text-blue-400">65%</span></div>
+            </div>
+            <div class="text-center relative">
+              <div id="r2xGpuChart" class="h-20 w-full"></div>
+              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">GPU <span class="font-mono text-blue-400">88%</span></div>
+            </div>
+          </div>
+          <div class="relative z-10 px-1 mt-1">
+            <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+              <span>RAM 使用率</span>
+              <span class="font-mono text-blue-400">16.5 / 32 GB</span>
+            </div>
+            <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden border border-gray-700">
+              <div class="bg-blue-400 h-full shadow-[0_0_8px_#60a5fa]" style="width: 51%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5.5 右中 (设备温度监测) -->
+    <div class="panel panel-rm p-4">
+      <div class="panel-title">
+        <i class="fas fa-temperature-high text-cyan-400"></i> 设备温度监测 (DEVICE TEMPERATURE)
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 flex-1 min-h-0">
+        <div class="temp-card glassy-frame p-3 relative border border-white/10" data-device="A">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="text-xs text-cyan-300/80">设备 A (Device A)</div>
+              <div class="temp-status text-[10px] text-gray-400 mt-1">状态：正常</div>
+            </div>
+            <div class="temp-value text-2xl font-bold text-white font-mono tracking-wider">--<span class="text-xs text-cyan-400">°C</span></div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <svg class="temp-gauge w-24 h-16" viewBox="0 0 100 60" aria-hidden="true">
+              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-track" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="8" stroke-linecap="round" />
+              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-progress" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" />
+            </svg>
+            <canvas class="temp-canvas flex-1 h-16 w-full rounded"></canvas>
+          </div>
+        </div>
+
+        <div class="temp-card glassy-frame p-3 relative border border-white/10" data-device="B">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="text-xs text-cyan-300/80">设备 B (Device B)</div>
+              <div class="temp-status text-[10px] text-gray-400 mt-1">状态：正常</div>
+            </div>
+            <div class="temp-value text-2xl font-bold text-white font-mono tracking-wider">--<span class="text-xs text-cyan-400">°C</span></div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <svg class="temp-gauge w-24 h-16" viewBox="0 0 100 60" aria-hidden="true">
+              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-track" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="8" stroke-linecap="round" />
+              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-progress" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" />
+            </svg>
+            <canvas class="temp-canvas flex-1 h-16 w-full rounded"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. 右下 (车辆与生命维持系统) -->
+    <div class="panel panel-br p-4">
+      <div class="panel-title">
+        <i class="fas fa-car-battery text-cyan-400"></i> 车辆与生命维持系统 (VEHICLE & LIFE SUPPORT)
+      </div>
+      
+      <div class="flex flex-col gap-4 flex-1 min-h-0">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- 电池 -->
+          <div class="glassy-frame p-3 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div class="absolute bottom-0 w-full h-1 bg-green-500 shadow-[0_0_15px_#4ade80] transition-all group-hover:h-1.5"></div>
+            <div class="flex items-center justify-between w-full mb-1">
+              <i class="fas fa-battery-three-quarters text-2xl text-green-400"></i>
+              <span class="text-[10px] text-gray-400">Main Battery</span>
+            </div>
+            <div class="text-3xl font-bold text-white font-mono mt-1">88<span class="text-sm text-green-400">%</span></div>
+            <div class="text-xs text-green-200 mt-1">健康状态: 良好</div>
+          </div>
+          
+          <!-- 水箱 -->
+          <div class="glassy-frame p-3 flex flex-col items-center justify-center relative overflow-hidden group">
+            <div class="absolute bottom-0 w-full h-1 bg-blue-500 shadow-[0_0_15px_#3b82f6] transition-all group-hover:h-1.5"></div>
+            <div class="flex items-center justify-between w-full mb-1">
+              <i class="fas fa-tint text-2xl text-blue-400"></i>
+              <span class="text-[10px] text-gray-400">Water Tank</span>
+            </div>
+            <div class="text-3xl font-bold text-white font-mono mt-1">75<span class="text-sm text-blue-400">%</span></div>
+            <div class="text-xs text-blue-200 mt-1 font-mono">150/200 L</div>
+          </div>
+        </div>
+        
+        <!-- 太阳能 -->
+        <div class="glassy-frame p-3 flex justify-between items-center bg-yellow-900/10 border-yellow-500/20 hover:border-yellow-500/50 transition">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/50 shadow-[0_0_10px_rgba(250,204,21,0.2)]">
+              <i class="fas fa-solar-panel text-yellow-400 text-xl"></i>
+            </div>
+            <div>
+              <div class="text-xs text-yellow-200/80 mb-1">太阳能充电 (Solar Charge)</div>
+              <div class="text-2xl font-bold text-white font-mono flex items-end gap-1">
+                1.2 <span class="text-sm text-yellow-400 mb-1">kW</span>
+              </div>
+            </div>
+          </div>
+          <div id="solarChart" class="w-24 h-12"></div>
+        </div>
+
+        <!-- 胎压监测 -->
+        <div class="flex-1 glassy-frame p-3 flex flex-col relative min-h-0">
+          <div class="text-xs text-cyan-300/80 text-center mb-2 flex justify-center items-center gap-2">
+            <i class="fas fa-car"></i> 胎压监测 (Tire Pressure)
+          </div>
+          <div class="flex-1 flex justify-center items-center relative">
+            <!-- 车辆轮廓 -->
+            <div class="w-16 h-28 border border-cyan-700/50 rounded-xl relative flex items-center justify-center bg-cyan-900/10 shadow-[inset_0_0_15px_rgba(34,211,238,0.1)]">
+              <div class="w-10 h-20 border border-cyan-500/30 rounded-lg"></div>
+              <!-- 轮胎框 -->
+              <!-- 左前 -->
+              <div class="absolute -left-3 top-3 w-3 h-7 bg-green-500/90 rounded shadow-[0_0_8px_#4ade80] flex items-center justify-center">
+                <div class="w-1 h-3 bg-black/30"></div>
+              </div>
+              <!-- 右前 -->
+              <div class="absolute -right-3 top-3 w-3 h-7 bg-green-500/90 rounded shadow-[0_0_8px_#4ade80] flex items-center justify-center">
+                <div class="w-1 h-3 bg-black/30"></div>
+              </div>
+              <!-- 左后 -->
+              <div class="absolute -left-3 bottom-3 w-3 h-7 bg-green-500/90 rounded shadow-[0_0_8px_#4ade80] flex items-center justify-center">
+                <div class="w-1 h-3 bg-black/30"></div>
+              </div>
+              <!-- 右后 -->
+              <div class="absolute -right-3 bottom-3 w-3 h-7 bg-yellow-500/90 rounded shadow-[0_0_8px_#facc15] flex items-center justify-center animate-pulse">
+                <div class="w-1 h-3 bg-black/30"></div>
+              </div>
+            </div>
+            
+            <!-- 数值标签 -->
+            <div class="absolute left-0 top-3 text-sm font-mono text-green-400 bg-black/50 px-1 rounded">2.4<span class="text-[10px]">bar</span></div>
+            <div class="absolute right-0 top-3 text-sm font-mono text-green-400 bg-black/50 px-1 rounded">2.5<span class="text-[10px]">bar</span></div>
+            <div class="absolute left-0 bottom-3 text-sm font-mono text-green-400 bg-black/50 px-1 rounded">2.4<span class="text-[10px]">bar</span></div>
+            <div class="absolute right-0 bottom-3 text-sm font-mono text-yellow-400 bg-black/50 px-1 rounded border border-yellow-500/50">2.6<span class="text-[10px]">bar</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 页脚 -->
+  <div class="h-10 flex justify-between items-center text-cyan-500/80 text-xs px-8 font-mono border-t border-cyan-900/50 bg-black/60 backdrop-blur absolute bottom-0 w-full z-50">
+    <div class="flex items-center gap-2"><i class="fas fa-satellite text-cyan-400"></i> 柴火数字基地车移动数据中心 (Chaihuo Mobile Data Center)</div>
+    <div id="realTimeClock" class="font-bold text-cyan-400 tracking-wider"></div>
+  </div>
+
+  <!-- Map Configuration & Animation Scripts -->
+  <script src="map-config.js"></script>
+  <script src="map-animation.js"></script>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // 1. 实时时钟
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.getFullYear() + '-' + 
+        String(now.getMonth()+1).padStart(2, '0') + '-' + 
+        String(now.getDate()).padStart(2, '0') + ' ' + 
+        String(now.getHours()).padStart(2, '0') + ':' + 
+        String(now.getMinutes()).padStart(2, '0') + ':' + 
+        String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('realTimeClock').innerHTML = '当前时间：<span class="text-white">' + timeStr + '</span>';
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 2. 左上：24小时温度折线图
+    const tempChart = echarts.init(document.getElementById('tempChart'));
+    tempChart.setOption({
+      grid: { top: 5, bottom: 5, left: 0, right: 0 },
+      xAxis: { type: 'category', show: false, data: ['1','2','3','4','5','6','7'] },
+      yAxis: { type: 'value', show: false, min: 'dataMin' },
+      series: [{
+        data: [15, 16, 14, 18, 20, 21.5, 21],
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        lineStyle: { color: '#06b6d4', width: 3 }, // cyan-500
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(6, 182, 212, 0.4)' },
+            { offset: 1, color: 'rgba(6, 182, 212, 0)' }
+          ])
+        }
+      }]
+    });
+
+    // 3. 左上：湿度仪表盘
+    const humChart = echarts.init(document.getElementById('humChart'));
+    humChart.setOption({
+      series: [{
+        type: 'gauge',
+        radius: '90%',
+        center: ['50%', '60%'],
+        startAngle: 200,
+        endAngle: -20,
+        min: 0, max: 100,
+        splitNumber: 5,
+        axisLine: {
+          lineStyle: {
+            width: 8,
+            color: [
+              [0.45, '#06b6d4'], // current value 45%
+              [1, 'rgba(255,255,255,0.1)']
+            ]
+          }
+        },
+        pointer: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false },
+        axisLabel: { show: false },
+        detail: { show: false }
+      }]
+    });
+
+    // 4. 中央：路径追踪图 (中国地图)
+    const currentLocText = document.getElementById('currentLocText');
+
+    async function ensureChinaMapLoaded() {
+      if (typeof echarts?.getMap === 'function' && echarts.getMap('china')) return;
+
+      const candidates = [
+        'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
+        'https://geo.datav.aliyun.com/areas_v3/bound/100000.json'
+      ];
+
+      let lastError = null;
+      for (const url of candidates) {
+        try {
+          const resp = await fetch(url, { cache: 'no-store' });
+          if (!resp.ok) throw new Error('fetch failed: ' + resp.status);
+          const geoJson = await resp.json();
+          echarts.registerMap('china', geoJson);
+          return;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+
+      throw lastError || new Error('unable to load china geojson');
+    }
+
+    let mapAnimator = null;
+    ensureChinaMapLoaded().then(() => {
+      const mapEl = document.getElementById('chinaMap');
+      const mapChart = echarts.init(mapEl);
+      mapAnimator = new MapAnimator(mapChart, MAP_CONFIG);
+
+      window.addEventListener('nodeHovered', (e) => {
+        if (e.detail && e.detail.name) {
+          currentLocText.textContent = '查看: ' + e.detail.name;
+        } else {
+          currentLocText.textContent = '出发点: 深圳';
+        }
+      });
+
+    }).catch(() => {
+      currentLocText.textContent = '地图加载失败';
+    });
+
+    // 5. 右上：算力仪表盘通用函数
+    function initGauge(id, value, color) {
+      const chart = echarts.init(document.getElementById(id));
+      chart.setOption({
+        series: [{
+          type: 'gauge',
+          radius: '100%',
+          center: ['50%', '70%'],
+          startAngle: 200, endAngle: -20,
+          min: 0, max: 100, splitNumber: 5,
+          axisLine: {
+            lineStyle: {
+              width: 8,
+              color: [[value / 100, color], [1, 'rgba(255,255,255,0.1)']]
+            }
+          },
+          pointer: { show: false },
+          axisTick: { show: false },
+          splitLine: { show: false },
+          axisLabel: { show: false },
+          detail: { show: false }
+        }]
+      });
+      return chart;
+    }
+    const j50Cpu = initGauge('j50CpuChart', 78, '#22d3ee');
+    const j50Gpu = initGauge('j50GpuChart', 92, '#22d3ee');
+    const r2xCpu = initGauge('r2xCpuChart', 65, '#60a5fa');
+    const r2xGpu = initGauge('r2xGpuChart', 88, '#60a5fa');
+
+    // 6. 右下：太阳能充电条形图
+    const solarChart = echarts.init(document.getElementById('solarChart'));
+    solarChart.setOption({
+      grid: { top: 5, bottom: 5, left: 0, right: 0 },
+      xAxis: { type: 'category', show: false, data: ['1','2','3','4','5','6'] },
+      yAxis: { type: 'value', show: false },
+      series: [{
+        data: [0.3, 0.5, 0.8, 1.2, 1.1, 0.9],
+        type: 'bar',
+        itemStyle: { color: '#facc15', borderRadius: [2,2,0,0] },
+        barWidth: '60%'
+      }]
+    });
+
+    // Resize handler
+    window.addEventListener('resize', function() {
+      tempChart.resize();
+      humChart.resize();
+      if (mapAnimator && mapAnimator.chart && typeof mapAnimator.chart.resize === 'function') {
+        mapAnimator.chart.resize();
+      }
+      j50Cpu.resize();
+      j50Gpu.resize();
+      r2xCpu.resize();
+      r2xGpu.resize();
+      solarChart.resize();
+    });
+
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function setGaugeProgress(cardEl, value) {
+      const progress = cardEl.querySelector('.temp-gauge-progress');
+      if (!progress) return;
+      const len = progress.getTotalLength();
+      progress.style.strokeDasharray = String(len);
+      const pct = clamp(value / 100, 0, 1);
+      progress.style.strokeDashoffset = String(len * (1 - pct));
+      const isAlert = value > 80;
+      progress.style.stroke = isAlert ? '#f87171' : '#22d3ee';
+    }
+
+    function ensureCanvasSize(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.round(rect.width * dpr));
+      const h = Math.max(1, Math.round(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      return { w, h };
+    }
+
+    function drawSparkline(canvas, values, strokeColor) {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const { w, h } = ensureCanvasSize(canvas);
+      ctx.clearRect(0, 0, w, h);
+
+      const padding = Math.round(h * 0.18);
+      const innerH = Math.max(1, h - padding * 2);
+      const innerW = Math.max(1, w - padding * 2);
+
+      const minV = Math.min(...values, 20);
+      const maxV = Math.max(...values, 90);
+      const span = Math.max(1, maxV - minV);
+
+      const xFor = (i) => padding + (innerW * i) / Math.max(1, values.length - 1);
+      const yFor = (v) => padding + innerH - (innerH * (v - minV)) / span;
+
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding, padding + innerH);
+      ctx.lineTo(padding + innerW, padding + innerH);
+      ctx.stroke();
+      ctx.restore();
+
+      const gradient = ctx.createLinearGradient(0, padding, 0, padding + innerH);
+      gradient.addColorStop(0, strokeColor.replace(',1)', ',0.28)'));
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+      ctx.beginPath();
+      values.forEach((v, i) => {
+        const x = xFor(i);
+        const y = yFor(v);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = strokeColor;
+      ctx.shadowColor = strokeColor;
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.lineTo(xFor(values.length - 1), padding + innerH);
+      ctx.lineTo(xFor(0), padding + innerH);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+
+    function createSimTempStream(seed) {
+      let v = seed;
+      let t = 0;
+      return () => {
+        t += 1;
+        const drift = (Math.sin(t / 10) + Math.sin(t / 17)) * 0.35;
+        const noise = (Math.random() - 0.5) * 1.8;
+        const spike = Math.random() < 0.04 ? 18 + Math.random() * 12 : 0;
+        v = clamp(v + drift + noise + spike, 18, 98);
+        return Number(v.toFixed(1));
+      };
+    }
+
+    const deviceTempState = new Map([
+      ['A', { next: createSimTempStream(62), values: Array.from({ length: 30 }, () => 62) }],
+      ['B', { next: createSimTempStream(58), values: Array.from({ length: 30 }, () => 58) }]
+    ]);
+
+    function updateTempCard(cardEl, deviceId) {
+      const state = deviceTempState.get(deviceId);
+      if (!state) return;
+
+      const value = state.next();
+      state.values.push(value);
+      while (state.values.length > 60) state.values.shift();
+
+      const valueEl = cardEl.querySelector('.temp-value');
+      if (valueEl) valueEl.innerHTML = `${value}<span class="text-xs text-cyan-400">°C</span>`;
+
+      const statusEl = cardEl.querySelector('.temp-status');
+      const isAlert = value > 80;
+      if (statusEl) statusEl.textContent = isAlert ? '状态：温度超限（>80°C）' : '状态：正常';
+
+      cardEl.classList.toggle('alert', isAlert);
+      setGaugeProgress(cardEl, value);
+
+      const canvas = cardEl.querySelector('.temp-canvas');
+      if (canvas) {
+        const strokeColor = isAlert ? 'rgba(248,113,113,1)' : 'rgba(34,211,238,1)';
+        drawSparkline(canvas, state.values, strokeColor);
+      }
+    }
+
+    function initTempMonitors() {
+      const cards = Array.from(document.querySelectorAll('.temp-card'));
+      cards.forEach((card) => {
+        const deviceId = card.dataset.device;
+        if (!deviceId) return;
+        setGaugeProgress(card, 0);
+        updateTempCard(card, deviceId);
+      });
+
+      const ro = new ResizeObserver(() => {
+        cards.forEach((card) => {
+          const deviceId = card.dataset.device;
+          if (!deviceId) return;
+          const state = deviceTempState.get(deviceId);
+          const canvas = card.querySelector('.temp-canvas');
+          if (!canvas || !state) return;
+          const isAlert = card.classList.contains('alert');
+          const strokeColor = isAlert ? 'rgba(248,113,113,1)' : 'rgba(34,211,238,1)';
+          drawSparkline(canvas, state.values, strokeColor);
+        });
+      });
+      cards.forEach((card) => ro.observe(card));
+
+      setInterval(() => {
+        cards.forEach((card) => {
+          const deviceId = card.dataset.device;
+          if (!deviceId) return;
+          updateTempCard(card, deviceId);
+        });
+      }, 1000);
+    }
+
+    initTempMonitors();
+  </script>
+</body>
+</html>
