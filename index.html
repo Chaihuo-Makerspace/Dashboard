@@ -55,8 +55,7 @@
     .panel-bl { grid-column: 1; grid-row: 7 / span 6; }
     .panel-ct { grid-column: 2; grid-row: 1 / span 8; }
     .panel-cb { grid-column: 2; grid-row: 9 / span 4; }
-    .panel-tr { grid-column: 3; grid-row: 1 / span 4; }
-    .panel-rm { grid-column: 3; grid-row: 5 / span 3; }
+    .panel-merged { grid-column: 3; grid-row: 1 / span 7; }
     .panel-br { grid-column: 3; grid-row: 8 / span 5; }
 
     /* Panel Styling */
@@ -187,6 +186,31 @@
       color: #fecaca;
       animation: tempTextBlink 0.9s ease-in-out infinite;
     }
+
+    /* --- 右侧面板缩放专用样式 --- */
+    .right-panel {
+      padding: 16px 16px 10px !important; /* 底部固定 10px */
+      overflow: hidden !important;        /* 防止缩放后溢出 */
+    }
+    
+    .right-panel > .inner {
+      transform: scale(var(--panel-scale, 1));
+      transform-origin: right bottom; /* 以右下角为基准缩放，保持底边距稳定 */
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* 统一收口最后一行/最后一个元素的外边距，确保真实间距=10px */
+    .right-panel > .inner > *:last-child {
+      margin-bottom: 0 !important;
+    }
+    
+    /* 响应式缩放 */
+    @media (max-width: 1680px) { .right-panel { --panel-scale: 0.95; } }
+    @media (max-width: 1440px) { .right-panel { --panel-scale: 0.9; } }
+    @media (max-width: 1280px) { .right-panel { --panel-scale: 0.85; } }
   </style>
 </head>
 <body>
@@ -298,7 +322,8 @@
     </div>
 
     <!-- 3. 中央 (路径追踪图) -->
-    <div class="panel panel-ct p-0 border-cyan-500/50 shadow-[0_0_25px_rgba(0,255,255,0.1)]">
+    <div class="panel panel-ct p-0">
+      <div class="cluster-panel-anim" aria-hidden="true"></div>
       <div id="chinaMap" class="w-full h-full absolute inset-0 z-0"></div>
       
       <!-- Overlay Header -->
@@ -390,203 +415,242 @@
       </div>
     </div>
 
-    <!-- 5. 右上 (车载计算集群性能) -->
-    <div class="panel panel-tr p-4">
-      <div class="cluster-panel-anim" aria-hidden="true"></div>
-      <div class="panel-title relative z-10">
-        <i class="fas fa-server text-cyan-400"></i> 车载计算集群性能 (COMPUTING CLUSTER)
-      </div>
-      
-      <div class="flex flex-col gap-4 flex-1 justify-between min-h-0 relative z-10">
-        <!-- J50 -->
-        <div class="glassy-frame p-3 relative group">
-          <div class="absolute inset-0 bg-cyan-900/5 opacity-0 group-hover:opacity-100 transition rounded-lg"></div>
-          <div class="text-sm font-bold text-white mb-2 border-b border-cyan-500/20 pb-1.5 flex justify-between items-center relative z-10">
-            <span class="flex items-center gap-2"><i class="fas fa-microchip text-cyan-400 text-lg"></i> J50 Node</span>
-            <span class="text-xs text-green-400 flex items-center gap-1 bg-green-900/30 px-1.5 py-0.5 rounded border border-green-500/30">
-              <i class="fas fa-satellite-dish"></i> Starlink <span class="font-mono font-bold">35ms</span>
-            </span>
-          </div>
-          <div class="grid grid-cols-2 gap-2 mb-1 relative z-10">
-            <div class="text-center relative">
-              <div id="j50CpuChart" class="h-20 w-full"></div>
-              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">CPU <span class="font-mono text-cyan-400">78%</span></div>
-            </div>
-            <div class="text-center relative">
-              <div id="j50GpuChart" class="h-20 w-full"></div>
-              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">GPU <span class="font-mono text-cyan-400">92%</span></div>
-            </div>
-          </div>
-          <div class="relative z-10 px-1 mt-1">
-            <div class="flex justify-between text-[10px] text-gray-400 mb-1">
-              <span>RAM 使用率</span>
-              <span class="font-mono text-yellow-400">18.1 / 32 GB</span>
-            </div>
-            <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden border border-gray-700">
-              <div class="bg-yellow-400 h-full shadow-[0_0_8px_#facc15]" style="width: 56%"></div>
-            </div>
-          </div>
+    <!-- 5 & 5.5 合并 (计算集群与设备温度) -->
+    <div class="panel panel-merged p-3">
+      <!-- <div class="cluster-panel-anim" aria-hidden="true"></div> -->
+      <div class="inner">
+        <div class="panel-title relative z-10" style="margin-bottom: 0.5rem; padding-bottom: 0.25rem;">
+          <i class="fas fa-server text-cyan-400"></i> 综合运行状态 (SYSTEM STATUS)
         </div>
-
-        <!-- R2X -->
-        <div class="glassy-frame p-3 relative group">
-          <div class="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition rounded-lg"></div>
-          <div class="text-sm font-bold text-white mb-2 border-b border-blue-500/20 pb-1.5 flex justify-between items-center relative z-10">
-            <span class="flex items-center gap-2"><i class="fas fa-microchip text-blue-400 text-lg"></i> R2X Node</span>
-            <span class="text-xs text-blue-400 flex items-center gap-1 bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-500/30">
-              <i class="fas fa-broadcast-tower animate-pulse"></i> 5G <span class="font-mono font-bold">40ms</span>
-            </span>
-          </div>
-          <div class="grid grid-cols-2 gap-2 mb-1 relative z-10">
-            <div class="text-center relative">
-              <div id="r2xCpuChart" class="h-20 w-full"></div>
-              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">CPU <span class="font-mono text-blue-400">65%</span></div>
+        
+        <div class="flex flex-col gap-2 flex-1 justify-between min-h-0 relative z-10 overflow-y-auto pr-1">
+          
+          <!-- J50 -->
+          <div class="glassy-frame relative group flex flex-col gap-2" style="padding: 12px; box-sizing: border-box;">
+            <div class="absolute inset-0 bg-cyan-900/5 opacity-0 group-hover:opacity-100 transition rounded-lg"></div>
+            
+            <!-- J50 Header -->
+            <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2 relative z-10">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-microchip text-cyan-400 text-lg"></i>
+                <span class="text-base font-bold text-white tracking-wide">J50 Node</span>
+              </div>
+              <div class="flex items-center gap-2 bg-green-900/30 px-2 py-1 rounded-md border border-green-500/30">
+                <i class="fas fa-satellite-dish text-green-400 text-sm"></i>
+                <span class="text-xs font-mono text-green-400 font-bold">Starlink 35ms</span>
+              </div>
             </div>
-            <div class="text-center relative">
-              <div id="r2xGpuChart" class="h-20 w-full"></div>
-              <div class="text-xs text-gray-300 absolute bottom-1 w-full text-center">GPU <span class="font-mono text-blue-400">88%</span></div>
+
+            <!-- J50 Metrics Grid -->
+            <div class="grid grid-cols-2 gap-x-4 gap-y-3 relative z-10 mt-1">
+              
+              <!-- CPU & GPU Charts -->
+              <div class="flex gap-2 col-span-2 sm:col-span-1">
+                <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
+                  <div id="j50CpuChart" class="w-full h-12"></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">CPU <span class="font-mono text-cyan-400 font-bold">78%</span></div>
+                </div>
+                <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
+                  <div id="j50GpuChart" class="w-full h-12"></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">GPU <span class="font-mono text-cyan-400 font-bold">92%</span></div>
+                </div>
+              </div>
+
+              <!-- Memory & Storage Bars -->
+              <div class="flex flex-col justify-center gap-2 col-span-2 sm:col-span-1">
+                <div class="flex flex-col">
+                  <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+                    <span>内存 (Memory)</span><span class="font-mono text-yellow-400 font-bold">18.1G / 32G</span>
+                  </div>
+                  <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-yellow-400 h-full shadow-[0_0_8px_#facc15]" style="width: 56%"></div>
+                  </div>
+                </div>
+                <div class="flex flex-col">
+                  <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+                    <span>存储 (Storage)</span><span class="font-mono text-cyan-400 font-bold">45%</span>
+                  </div>
+                  <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-cyan-400 h-full shadow-[0_0_8px_#22d3ee]" style="width: 45%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Temperature Alert Card (Moved from 5.5) -->
+              <div class="col-span-2 mt-1 temp-card bg-black/30 rounded border border-white/5 p-2 flex items-center justify-between" data-device="A">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-thermometer-half text-cyan-400 text-lg"></i>
+                  <div>
+                    <div class="text-[10px] text-cyan-300/80">设备温度 (Device Temp)</div>
+                    <div class="temp-status text-[9px] text-gray-400 mt-0.5">状态：正常</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <canvas class="temp-canvas w-16 h-8 rounded opacity-80"></canvas>
+                  <div class="temp-value text-xl font-bold text-white font-mono tracking-wider w-16 text-right">--<span class="text-[10px] text-cyan-400">°C</span></div>
+                </div>
+              </div>
+
             </div>
           </div>
-          <div class="relative z-10 px-1 mt-1">
-            <div class="flex justify-between text-[10px] text-gray-400 mb-1">
-              <span>RAM 使用率</span>
-              <span class="font-mono text-blue-400">16.5 / 32 GB</span>
+
+          <!-- R2X -->
+          <div class="glassy-frame relative group flex flex-col gap-2" style="padding: 12px; box-sizing: border-box;">
+            <div class="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition rounded-lg"></div>
+            
+            <!-- R2X Header -->
+            <div class="flex items-center justify-between border-b border-blue-500/20 pb-2 relative z-10">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-microchip text-blue-400 text-lg"></i>
+                <span class="text-base font-bold text-white tracking-wide">R2X Node</span>
+              </div>
+              <div class="flex items-center gap-2 bg-blue-900/30 px-2 py-1 rounded-md border border-blue-500/30">
+                <i class="fas fa-broadcast-tower animate-pulse text-blue-400 text-sm"></i>
+                <span class="text-xs font-mono text-blue-400 font-bold">5G 40ms</span>
+              </div>
             </div>
-            <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden border border-gray-700">
-              <div class="bg-blue-400 h-full shadow-[0_0_8px_#60a5fa]" style="width: 51%"></div>
+
+            <!-- R2X Metrics Grid -->
+            <div class="grid grid-cols-2 gap-x-4 gap-y-3 relative z-10 mt-1">
+              
+              <!-- CPU & GPU Charts -->
+              <div class="flex gap-2 col-span-2 sm:col-span-1">
+                <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
+                  <div id="r2xCpuChart" class="w-full h-12"></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">CPU <span class="font-mono text-blue-400 font-bold">65%</span></div>
+                </div>
+                <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
+                  <div id="r2xGpuChart" class="w-full h-12"></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">GPU <span class="font-mono text-blue-400 font-bold">88%</span></div>
+                </div>
+              </div>
+
+              <!-- Memory & Storage Bars -->
+              <div class="flex flex-col justify-center gap-2 col-span-2 sm:col-span-1">
+                <div class="flex flex-col">
+                  <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+                    <span>内存 (Memory)</span><span class="font-mono text-blue-400 font-bold">16.5G / 32G</span>
+                  </div>
+                  <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-blue-400 h-full shadow-[0_0_8px_#60a5fa]" style="width: 51%"></div>
+                  </div>
+                </div>
+                <div class="flex flex-col">
+                  <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+                    <span>存储 (Storage)</span><span class="font-mono text-cyan-400 font-bold">32%</span>
+                  </div>
+                  <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-cyan-400 h-full shadow-[0_0_8px_#22d3ee]" style="width: 32%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Temperature Alert Card (Moved from 5.5) -->
+              <div class="col-span-2 mt-1 temp-card bg-black/30 rounded border border-white/5 p-2 flex items-center justify-between" data-device="B">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-thermometer-half text-blue-400 text-lg"></i>
+                  <div>
+                    <div class="text-[10px] text-cyan-300/80">设备温度 (Device Temp)</div>
+                    <div class="temp-status text-[9px] text-gray-400 mt-0.5">状态：正常</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <canvas class="temp-canvas w-16 h-8 rounded opacity-80"></canvas>
+                  <div class="temp-value text-xl font-bold text-white font-mono tracking-wider w-16 text-right">--<span class="text-[10px] text-cyan-400">°C</span></div>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5.5 右中 (设备温度监测) -->
-    <div class="panel panel-rm p-4">
-      <div class="panel-title">
-        <i class="fas fa-temperature-high text-cyan-400"></i> 设备温度监测 (DEVICE TEMPERATURE)
-      </div>
-
-      <div class="grid grid-cols-2 gap-4 flex-1 min-h-0">
-        <div class="temp-card glassy-frame p-3 relative border border-white/10" data-device="A">
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <div class="text-xs text-cyan-300/80">设备 A (Device A)</div>
-              <div class="temp-status text-[10px] text-gray-400 mt-1">状态：正常</div>
-            </div>
-            <div class="temp-value text-2xl font-bold text-white font-mono tracking-wider">--<span class="text-xs text-cyan-400">°C</span></div>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <svg class="temp-gauge w-24 h-16" viewBox="0 0 100 60" aria-hidden="true">
-              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-track" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="8" stroke-linecap="round" />
-              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-progress" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" />
-            </svg>
-            <canvas class="temp-canvas flex-1 h-16 w-full rounded"></canvas>
-          </div>
-        </div>
-
-        <div class="temp-card glassy-frame p-3 relative border border-white/10" data-device="B">
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <div class="text-xs text-cyan-300/80">设备 B (Device B)</div>
-              <div class="temp-status text-[10px] text-gray-400 mt-1">状态：正常</div>
-            </div>
-            <div class="temp-value text-2xl font-bold text-white font-mono tracking-wider">--<span class="text-xs text-cyan-400">°C</span></div>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <svg class="temp-gauge w-24 h-16" viewBox="0 0 100 60" aria-hidden="true">
-              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-track" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="8" stroke-linecap="round" />
-              <path d="M10 50 A40 40 0 0 1 90 50" class="temp-gauge-progress" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" />
-            </svg>
-            <canvas class="temp-canvas flex-1 h-16 w-full rounded"></canvas>
-          </div>
+          
         </div>
       </div>
     </div>
 
     <!-- 6. 右下 (车辆与生命维持系统) -->
-    <div class="panel panel-br p-4">
-      <div class="panel-title">
-        <i class="fas fa-car-battery text-cyan-400"></i> 车辆与生命维持系统 (VEHICLE & LIFE SUPPORT)
-      </div>
-      
-      <div class="flex flex-col gap-4 flex-1 min-h-0">
-        <div class="grid grid-cols-2 gap-4">
+    <div class="panel panel-br right-panel">
+      <div class="inner">
+        <div class="panel-title" style="margin-bottom: 0.5rem; padding-bottom: 0.25rem;">
+          <i class="fas fa-car-battery text-cyan-400"></i> 车辆与生命维持系统 (VEHICLE & LIFE SUPPORT)
+        </div>
+        
+        <div class="flex flex-col gap-2 flex-1 min-h-0">
+        <div class="grid grid-cols-2 gap-2">
           <!-- 电池 -->
-          <div class="glassy-frame p-3 flex flex-col items-center justify-center relative overflow-hidden group">
+          <div class="glassy-frame p-2 flex flex-col items-center justify-center relative overflow-hidden group">
             <div class="absolute bottom-0 w-full h-1 bg-green-500 shadow-[0_0_15px_#4ade80] transition-all group-hover:h-1.5"></div>
-            <div class="flex items-center justify-between w-full mb-1">
-              <i class="fas fa-battery-three-quarters text-2xl text-green-400"></i>
-              <span class="text-[10px] text-gray-400">Main Battery</span>
+            <div class="flex items-center justify-between w-full mb-0.5">
+              <i class="fas fa-battery-three-quarters text-xl text-green-400"></i>
+              <span class="text-[9px] text-gray-400">Main Battery</span>
             </div>
-            <div class="text-3xl font-bold text-white font-mono mt-1">88<span class="text-sm text-green-400">%</span></div>
-            <div class="text-xs text-green-200 mt-1">健康状态: 良好</div>
+            <div class="text-2xl font-bold text-white font-mono mt-0.5">88<span class="text-xs text-green-400">%</span></div>
+            <div class="text-[10px] text-green-200 mt-0.5">健康状态: 良好</div>
           </div>
           
           <!-- 水箱 -->
-          <div class="glassy-frame p-3 flex flex-col items-center justify-center relative overflow-hidden group">
+          <div class="glassy-frame p-2 flex flex-col items-center justify-center relative overflow-hidden group">
             <div class="absolute bottom-0 w-full h-1 bg-blue-500 shadow-[0_0_15px_#3b82f6] transition-all group-hover:h-1.5"></div>
-            <div class="flex items-center justify-between w-full mb-1">
-              <i class="fas fa-tint text-2xl text-blue-400"></i>
-              <span class="text-[10px] text-gray-400">Water Tank</span>
+            <div class="flex items-center justify-between w-full mb-0.5">
+              <i class="fas fa-tint text-xl text-blue-400"></i>
+              <span class="text-[9px] text-gray-400">Water Tank</span>
             </div>
-            <div class="text-3xl font-bold text-white font-mono mt-1">75<span class="text-sm text-blue-400">%</span></div>
-            <div class="text-xs text-blue-200 mt-1 font-mono">150/200 L</div>
+            <div class="text-2xl font-bold text-white font-mono mt-0.5">75<span class="text-xs text-blue-400">%</span></div>
+            <div class="text-[10px] text-blue-200 mt-0.5 font-mono">150/200 L</div>
           </div>
         </div>
         
         <!-- 太阳能 -->
-        <div class="glassy-frame p-3 flex justify-between items-center bg-yellow-900/10 border-yellow-500/20 hover:border-yellow-500/50 transition">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/50 shadow-[0_0_10px_rgba(250,204,21,0.2)]">
-              <i class="fas fa-solar-panel text-yellow-400 text-xl"></i>
+        <div class="glassy-frame p-2 flex justify-between items-center bg-yellow-900/10 border-yellow-500/20 hover:border-yellow-500/50 transition">
+          <div class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/50 shadow-[0_0_10px_rgba(250,204,21,0.2)]">
+              <i class="fas fa-solar-panel text-yellow-400 text-lg"></i>
             </div>
             <div>
-              <div class="text-xs text-yellow-200/80 mb-1">太阳能充电 (Solar Charge)</div>
-              <div class="text-2xl font-bold text-white font-mono flex items-end gap-1">
-                1.2 <span class="text-sm text-yellow-400 mb-1">kW</span>
+              <div class="text-[10px] text-yellow-200/80 mb-0.5">太阳能充电 (Solar Charge)</div>
+              <div class="text-xl font-bold text-white font-mono flex items-end gap-1">
+                1.2 <span class="text-xs text-yellow-400 mb-0.5">kW</span>
               </div>
             </div>
           </div>
-          <div id="solarChart" class="w-24 h-12"></div>
+          <div id="solarChart" class="w-20 h-10"></div>
         </div>
 
         <!-- 胎压监测 -->
-        <div class="flex-1 glassy-frame p-3 flex flex-col relative min-h-0">
-          <div class="text-xs text-cyan-300/80 text-center mb-2 flex justify-center items-center gap-2">
+        <div class="flex-1 glassy-frame p-2 flex flex-col relative min-h-0">
+          <div class="text-[10px] text-cyan-300/80 text-center mb-1 flex justify-center items-center gap-1">
             <i class="fas fa-car"></i> 胎压监测 (Tire Pressure)
           </div>
           <div class="flex-1 flex justify-center items-center relative">
             <!-- 车辆轮廓 -->
-            <div class="w-16 h-28 border border-cyan-700/50 rounded-xl relative flex items-center justify-center bg-cyan-900/10 shadow-[inset_0_0_15px_rgba(34,211,238,0.1)]">
-              <div class="w-10 h-20 border border-cyan-500/30 rounded-lg"></div>
+            <div class="w-12 h-20 border border-cyan-700/50 rounded-lg relative flex items-center justify-center bg-cyan-900/10 shadow-[inset_0_0_15px_rgba(34,211,238,0.1)]">
+              <div class="w-8 h-14 border border-cyan-500/30 rounded-md"></div>
               <!-- 轮胎框 -->
               <!-- 左前 -->
-              <div class="absolute -left-3 top-3 w-3 h-7 bg-green-500/90 rounded shadow-[0_0_8px_#4ade80] flex items-center justify-center">
-                <div class="w-1 h-3 bg-black/30"></div>
+              <div class="absolute -left-2 top-2 w-2 h-5 bg-green-500/90 rounded-sm shadow-[0_0_8px_#4ade80] flex items-center justify-center">
+                <div class="w-0.5 h-2 bg-black/30"></div>
               </div>
               <!-- 右前 -->
-              <div class="absolute -right-3 top-3 w-3 h-7 bg-green-500/90 rounded shadow-[0_0_8px_#4ade80] flex items-center justify-center">
-                <div class="w-1 h-3 bg-black/30"></div>
+              <div class="absolute -right-2 top-2 w-2 h-5 bg-green-500/90 rounded-sm shadow-[0_0_8px_#4ade80] flex items-center justify-center">
+                <div class="w-0.5 h-2 bg-black/30"></div>
               </div>
               <!-- 左后 -->
-              <div class="absolute -left-3 bottom-3 w-3 h-7 bg-green-500/90 rounded shadow-[0_0_8px_#4ade80] flex items-center justify-center">
-                <div class="w-1 h-3 bg-black/30"></div>
+              <div class="absolute -left-2 bottom-2 w-2 h-5 bg-green-500/90 rounded-sm shadow-[0_0_8px_#4ade80] flex items-center justify-center">
+                <div class="w-0.5 h-2 bg-black/30"></div>
               </div>
               <!-- 右后 -->
-              <div class="absolute -right-3 bottom-3 w-3 h-7 bg-yellow-500/90 rounded shadow-[0_0_8px_#facc15] flex items-center justify-center animate-pulse">
-                <div class="w-1 h-3 bg-black/30"></div>
+              <div class="absolute -right-2 bottom-2 w-2 h-5 bg-yellow-500/90 rounded-sm shadow-[0_0_8px_#facc15] flex items-center justify-center animate-pulse">
+                <div class="w-0.5 h-2 bg-black/30"></div>
               </div>
             </div>
             
             <!-- 数值标签 -->
-            <div class="absolute left-0 top-3 text-sm font-mono text-green-400 bg-black/50 px-1 rounded">2.4<span class="text-[10px]">bar</span></div>
-            <div class="absolute right-0 top-3 text-sm font-mono text-green-400 bg-black/50 px-1 rounded">2.5<span class="text-[10px]">bar</span></div>
-            <div class="absolute left-0 bottom-3 text-sm font-mono text-green-400 bg-black/50 px-1 rounded">2.4<span class="text-[10px]">bar</span></div>
-            <div class="absolute right-0 bottom-3 text-sm font-mono text-yellow-400 bg-black/50 px-1 rounded border border-yellow-500/50">2.6<span class="text-[10px]">bar</span></div>
+            <div class="absolute left-1 top-2 text-xs font-mono text-green-400 bg-black/50 px-1 rounded">2.4<span class="text-[9px]">bar</span></div>
+            <div class="absolute right-1 top-2 text-xs font-mono text-green-400 bg-black/50 px-1 rounded">2.5<span class="text-[9px]">bar</span></div>
+            <div class="absolute left-1 bottom-2 text-xs font-mono text-green-400 bg-black/50 px-1 rounded">2.4<span class="text-[9px]">bar</span></div>
+            <div class="absolute right-1 bottom-2 text-xs font-mono text-yellow-400 bg-black/50 px-1 rounded border border-yellow-500/50">2.6<span class="text-[9px]">bar</span></div>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -714,7 +778,9 @@
 
     // 5. 右上：算力仪表盘通用函数
     function initGauge(id, value, color) {
-      const chart = echarts.init(document.getElementById(id));
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const chart = echarts.init(el);
       chart.setOption({
         series: [{
           type: 'gauge',
@@ -724,7 +790,7 @@
           min: 0, max: 100, splitNumber: 5,
           axisLine: {
             lineStyle: {
-              width: 8,
+              width: 5,
               color: [[value / 100, color], [1, 'rgba(255,255,255,0.1)']]
             }
           },
@@ -763,10 +829,10 @@
       if (mapAnimator && mapAnimator.chart && typeof mapAnimator.chart.resize === 'function') {
         mapAnimator.chart.resize();
       }
-      j50Cpu.resize();
-      j50Gpu.resize();
-      r2xCpu.resize();
-      r2xGpu.resize();
+      if (j50Cpu) j50Cpu.resize();
+      if (j50Gpu) j50Gpu.resize();
+      if (r2xCpu) r2xCpu.resize();
+      if (r2xGpu) r2xGpu.resize();
       solarChart.resize();
     });
 
