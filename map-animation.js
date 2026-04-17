@@ -54,6 +54,25 @@ class MapAnimator {
     });
   }
 
+  highlightProvince(provinceName) {
+    this.chart.setOption({
+      geo: {
+        regions: provinceName
+          ? [{
+              name: provinceName,
+              itemStyle: {
+                areaColor: 'rgba(34, 211, 238, 0.45)',
+                borderColor: '#22d3ee',
+                shadowColor: '#22d3ee',
+                shadowBlur: 25
+              },
+              label: { color: '#fff', fontWeight: 'bold' }
+            }]
+          : []
+      }
+    });
+  }
+
   bindEvents() {
     // 监听省份悬停
     this.chart.on('mouseover', (params) => {
