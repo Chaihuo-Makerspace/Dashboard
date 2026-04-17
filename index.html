@@ -224,11 +224,13 @@
       </div>
       <div class="flex justify-between items-center mb-4 bg-black/30 p-2 rounded border border-white/5">
         <div class="flex items-center gap-2 text-lg text-white font-bold">
-          <i class="fas fa-cloud-sun text-yellow-400 text-2xl"></i> 深圳南山区
+          <img id="weatherIcon" src="" alt="weather" class="w-8 h-8" style="display:none;">
+          <i id="weatherIconFallback" class="fas fa-cloud-sun text-yellow-400 text-2xl"></i>
+          <span id="sensorCityName">深圳南山区</span>
         </div>
         <div class="flex items-center gap-2 text-white">
-          <span class="text-green-400 text-xs border border-green-400 px-1 py-0.5 rounded shadow-[0_0_5px_#4ade80]">优</span>
-          <span class="font-mono text-lg">12</span> <span class="text-xs text-gray-400">µg/m³ PM2.5</span>
+          <span id="sensorAqi" class="text-green-400 text-xs border border-green-400 px-1 py-0.5 rounded shadow-[0_0_5px_#4ade80]">优</span>
+          <span id="sensorPm25" class="font-mono text-lg">12</span> <span class="text-xs text-gray-400">µg/m³ PM2.5</span>
         </div>
       </div>
       
@@ -236,13 +238,13 @@
         <!-- 温度 -->
         <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 flex flex-col relative group hover:border-cyan-500/50 transition">
           <div class="text-xs text-cyan-300/80 mb-1">温度 (Temperature)</div>
-          <div class="text-4xl font-bold text-white font-mono tracking-wider">21.5<span class="text-lg text-cyan-500">°C</span></div>
+          <div class="text-4xl font-bold text-white font-mono tracking-wider"><span id="sensorTemp">21.5</span><span class="text-lg text-cyan-500">°C</span></div>
           <div id="tempChart" class="flex-1 w-full mt-2 min-h-0"></div>
         </div>
         <!-- 湿度 -->
         <div class="bg-blue-900/20 p-3 rounded border border-blue-500/20 flex flex-col relative group hover:border-cyan-500/50 transition">
           <div class="text-xs text-cyan-300/80 mb-1">湿度 (Humidity)</div>
-          <div class="text-4xl font-bold text-white font-mono tracking-wider absolute top-3 right-3 z-10">45<span class="text-lg text-cyan-500">%</span></div>
+          <div class="text-4xl font-bold text-white font-mono tracking-wider absolute top-3 right-3 z-10"><span id="sensorHumidity">45</span><span class="text-lg text-cyan-500">%</span></div>
           <div id="humChart" class="flex-1 w-full min-h-0 -mt-4"></div>
         </div>
         <!-- 气压与海拔 -->
@@ -250,13 +252,13 @@
           <div class="absolute right-0 top-0 opacity-10"><i class="fas fa-mountain text-8xl"></i></div>
           <div class="z-10">
             <div class="text-xs text-cyan-300/80 mb-1">气压 (Pressure)</div>
-            <div class="text-3xl font-bold text-white font-mono">720 <span class="text-sm text-cyan-500">hPa</span></div>
+            <div class="text-3xl font-bold text-white font-mono"><span id="sensorPressure">720</span> <span class="text-sm text-cyan-500">hPa</span></div>
           </div>
           <div class="h-10 w-px bg-cyan-500/30 z-10"></div>
           <div class="text-right z-10">
-            <div class="text-xs text-cyan-300/80 mb-1">海拔 (Altitude)</div>
+            <div class="text-xs text-cyan-300/80 mb-1">风速 (Wind Speed)</div>
             <div class="text-3xl font-bold text-white font-mono flex items-center justify-end gap-2">
-              <i class="fas fa-arrow-up text-cyan-400 text-sm"></i> 3600<span class="text-sm text-cyan-500">m+</span>
+              <i class="fas fa-wind text-cyan-400 text-sm"></i> <span id="sensorWind">--</span><span class="text-sm text-cyan-500">m/s</span>
             </div>
           </div>
         </div>
