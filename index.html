@@ -824,6 +824,97 @@
       }]
     });
 
+    // ── 城市天气面板更新 ──────────────────────────────────────────
+    const DEPARTURE = new Date('2026-04-22T00:00:00.000Z');
+
+    function daysBetween(from, to) {
+      return Math.max(0, Math.floor((to - from) / 86400000));
+    }
+
+    const AQI_COLOR = {
+      '优': { text: 'text-green-400', border: 'border-green-400', shadow: 'shadow-[0_0_5px_#4ade80]' },
+      '良': { text: 'text-green-300', border: 'border-green-300', shadow: 'shadow-[0_0_5px_#86efac]' },
+      '轻度': { text: 'text-yellow-400', border: 'border-yellow-400', shadow: 'shadow-[0_0_5px_#facc15]' },
+      '中度': { text: 'text-orange-400', border: 'border-orange-400', shadow: 'shadow-[0_0_5px_#fb923c]' },
+      '重度': { text: 'text-red-400', border: 'border-red-400', shadow: 'shadow-[0_0_5px_#f87171]' }
+    };
+
+    function updateSensorPanel(data) {
+      // Weather icon
+      const iconEl = document.getElementById('weatherIcon');
+      const iconFallback = document.getElementById('weatherIconFallback');
+      if (data.weatherIcon) {
+        iconEl.src = `https://openweathermap.org/img/wn/${data.weatherIcon}@2x.png`;
+        iconEl.style.display = '';
+        iconFallback.style.display = 'none';
+      }
+
+      // City name
+      document.getElementById('sensorCityName').textContent = data.city;
+
+      // PM2.5 & AQI
+      document.getElementById('sensorPm25').textContent = Math.round(data.pm25);
+      const aqiEl = document.getElementById('sensorAqi');
+      aqiEl.textContent = data.aqi;
+      const colors = AQI_COLOR[data.aqi] || AQI_COLOR['良'];
+      aqiEl.className = `text-xs border px-1 py-0.5 rounded ${colors.text} ${colors.border} ${colors.shadow}`;
+
+      // Temperature
+      document.getElementById('sensorTemp').textContent = data.temperature.toFixed(1);
+
+      // Humidity value + gauge update
+      document.getElementById('sensorHumidity').textContent = data.humidity;
+      const humPct = Math.min(1, data.humidity / 100);
+      humChart.setOption({
+        series: [{
+          axisLine: {
+            lineStyle: {
+              color: [[humPct, '#06b6d4'], [1, 'rgba(255,255,255,0.1)']]
+            }
+          }
+        }]
+      });
+
+      // Pressure
+      document.getElementById('sensorPressure').textContent = data.pressure;
+
+      // Wind speed
+      document.getElementById('sensorWind').textContent = data.windSpeed.toFixed(1);
+    }
+
+    function updateTrackingCard(data) {
+      const now = new Date();
+      document.getElementById('currentLocText').textContent = data.city;
+      document.getElementById('cityDaysText').textContent =
+        daysBetween(new Date(data.cityArrivedAt), now);
+      document.getElementById('totalDaysText').textContent =
+        daysBetween(DEPARTURE, now);
+    }
+
+    function applyDashboardData(data) {
+      if (!data || data.empty) return;
+      updateSensorPanel(data);
+      updateTrackingCard(data);
+      if (mapAnimator && data.province) {
+        mapAnimator.highlightProvince(data.province);
+      }
+    }
+
+    async function fetchAndApply() {
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        applyDashboardData(data);
+      } catch (e) {
+        console.warn('fetchAndApply failed:', e);
+      }
+    }
+
+    // Initial load + hourly polling
+    fetchAndApply();
+    setInterval(fetchAndApply, 60 * 60 * 1000);
+    // ── END 城市天气 ──────────────────────────────────────────────
+
     // Resize handler
     window.addEventListener('resize', function() {
       tempChart.resize();
