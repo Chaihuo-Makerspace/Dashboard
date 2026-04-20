@@ -327,7 +327,6 @@
     <div class="panel panel-ct p-0">
       <div class="cluster-panel-anim" aria-hidden="true"></div>
       <div id="chinaMap" class="w-full h-full absolute inset-0 z-0"></div>
-      <canvas id="horseCanvas" class="absolute inset-0 pointer-events-none" style="z-index:1"></canvas>
 
       <!-- Overlay Header -->
       <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none p-4 flex justify-between items-start">
@@ -668,7 +667,6 @@
   <!-- Map Configuration & Animation Scripts -->
   <script src="map-config.js"></script>
   <script src="map-animation.js"></script>
-  <script src="horse-animator.js"></script>
 
   <!-- JavaScript Logic -->
   <script>
@@ -763,33 +761,11 @@
     }
 
     let mapAnimator = null;
-    let horseAnimator = null;
-
-    function syncHorseCanvas(mapEl, canvas) {
-      const r = mapEl.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = r.width * dpr;
-      canvas.height = r.height * dpr;
-      canvas.style.width = r.width + 'px';
-      canvas.style.height = r.height + 'px';
-      const ctx = canvas.getContext('2d');
-      ctx.resetTransform();
-      ctx.scale(dpr, dpr);
-      if (horseAnimator) horseAnimator.computePixelPath();
-    }
 
     ensureChinaMapLoaded().then(() => {
       const mapEl = document.getElementById('chinaMap');
       const mapChart = echarts.init(mapEl);
       mapAnimator = new MapAnimator(mapChart, MAP_CONFIG);
-
-      const horseCanvas = document.getElementById('horseCanvas');
-      syncHorseCanvas(mapEl, horseCanvas);
-      horseAnimator = new HorseAnimator(mapChart, horseCanvas);
-      horseAnimator.computePixelPath();
-      horseAnimator.start();
-
-      mapChart.on('georoam', () => horseAnimator.computePixelPath());
 
       window.addEventListener('nodeHovered', (e) => {
         if (e.detail && e.detail.name) {
@@ -946,9 +922,6 @@
       humChart.resize();
       if (mapAnimator && mapAnimator.chart && typeof mapAnimator.chart.resize === 'function') {
         mapAnimator.chart.resize();
-        const _mapEl = document.getElementById('chinaMap');
-        const _horseCanvas = document.getElementById('horseCanvas');
-        if (_mapEl && _horseCanvas) syncHorseCanvas(_mapEl, _horseCanvas);
       }
       if (j50Cpu) j50Cpu.resize();
       if (j50Gpu) j50Gpu.resize();
