@@ -1,6 +1,5 @@
 'use strict';
 
-require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -49,7 +48,7 @@ app.get('/api/update', async (req, res) => {
     return res.status(400).json({ error: `未找到城市 "${city}" 对应的省份，请检查城市名` });
   }
 
-  const API_KEY = process.env.OPENWEATHER_API_KEY;
+  const API_KEY = '7fa904ddcca965c7c641d02ac563da75';
 
   try {
     // 1. Geocode city → lat/lon
@@ -105,7 +104,7 @@ app.get('/api/update', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 if (require.main === module) {
   app.listen(PORT, () => console.log(`Dashboard server running on http://localhost:${PORT}`));
 }
