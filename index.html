@@ -911,9 +911,9 @@
       }
     }
 
-    // Initial load + hourly polling
+    // Initial load + polling every 1 minute
     fetchAndApply();
-    setInterval(fetchAndApply, 60 * 60 * 1000);
+    setInterval(fetchAndApply, 60 * 1000);
     // ── END 城市天气 ──────────────────────────────────────────────
 
     // Resize handler
