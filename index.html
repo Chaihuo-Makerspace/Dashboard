@@ -438,8 +438,8 @@
                 <span class="text-base font-bold text-white tracking-wide">J50 Node</span>
               </div>
               <div class="flex items-center gap-2 bg-green-900/30 px-2 py-1 rounded-md border border-green-500/30">
-                <i class="fas fa-satellite-dish text-green-400 text-sm"></i>
-                <span class="text-xs font-mono text-green-400 font-bold">Starlink 35ms</span>
+                <i class="fas fa-broadcast-tower animate-pulse text-green-400 text-sm"></i>
+                <span class="text-xs font-mono text-green-400 font-bold">5G 35ms</span>
               </div>
             </div>
 
@@ -450,11 +450,11 @@
               <div class="flex gap-2 col-span-2 sm:col-span-1">
                 <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
                   <div id="j50CpuChart" class="w-full h-12"></div>
-                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">CPU <span class="font-mono text-cyan-400 font-bold">78%</span></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">CPU <span class="font-mono text-cyan-400 font-bold">32%</span></div>
                 </div>
                 <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
                   <div id="j50GpuChart" class="w-full h-12"></div>
-                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">GPU <span class="font-mono text-cyan-400 font-bold">92%</span></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">GPU <span class="font-mono text-cyan-400 font-bold">45%</span></div>
                 </div>
               </div>
 
@@ -519,11 +519,11 @@
               <div class="flex gap-2 col-span-2 sm:col-span-1">
                 <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
                   <div id="r2xCpuChart" class="w-full h-12"></div>
-                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">CPU <span class="font-mono text-blue-400 font-bold">65%</span></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">CPU <span class="font-mono text-blue-400 font-bold">28%</span></div>
                 </div>
                 <div class="flex-1 text-center relative bg-black/20 rounded p-1 border border-white/5">
                   <div id="r2xGpuChart" class="w-full h-12"></div>
-                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">GPU <span class="font-mono text-blue-400 font-bold">88%</span></div>
+                  <div class="text-[10px] text-gray-300 absolute -bottom-1 w-full text-center">GPU <span class="font-mono text-blue-400 font-bold">40%</span></div>
                 </div>
               </div>
 
@@ -806,10 +806,10 @@
       });
       return chart;
     }
-    const j50Cpu = initGauge('j50CpuChart', 78, '#22d3ee');
-    const j50Gpu = initGauge('j50GpuChart', 92, '#22d3ee');
-    const r2xCpu = initGauge('r2xCpuChart', 65, '#60a5fa');
-    const r2xGpu = initGauge('r2xGpuChart', 88, '#60a5fa');
+    const j50Cpu = initGauge('j50CpuChart', 32, '#22d3ee');
+    const j50Gpu = initGauge('j50GpuChart', 45, '#22d3ee');
+    const r2xCpu = initGauge('r2xCpuChart', 28, '#60a5fa');
+    const r2xGpu = initGauge('r2xGpuChart', 40, '#60a5fa');
 
     // 6. 右下：太阳能充电条形图
     const solarChart = echarts.init(document.getElementById('solarChart'));
@@ -1018,15 +1018,15 @@
         t += 1;
         const drift = (Math.sin(t / 10) + Math.sin(t / 17)) * 0.35;
         const noise = (Math.random() - 0.5) * 1.8;
-        const spike = Math.random() < 0.04 ? 18 + Math.random() * 12 : 0;
-        v = clamp(v + drift + noise + spike, 18, 98);
+        const spike = Math.random() < 0.04 ? 3 + Math.random() * 4 : 0;
+        v = clamp(v + drift + noise + spike, 18, 75);
         return Number(v.toFixed(1));
       };
     }
 
     const deviceTempState = new Map([
-      ['A', { next: createSimTempStream(62), values: Array.from({ length: 30 }, () => 62) }],
-      ['B', { next: createSimTempStream(58), values: Array.from({ length: 30 }, () => 58) }]
+      ['A', { next: createSimTempStream(42), values: Array.from({ length: 30 }, () => 42) }],
+      ['B', { next: createSimTempStream(38), values: Array.from({ length: 30 }, () => 38) }]
     ]);
 
     function updateTempCard(cardEl, deviceId) {
