@@ -382,28 +382,8 @@
             <span>线上网友评论精选 (SOCIAL MEDIA)</span>
             <i class="fas fa-hashtag text-gray-500"></i>
           </div>
-          <div class="flex flex-col gap-2 flex-1 justify-between z-10 overflow-y-auto pr-1">
-            <div class="flex items-start gap-2 bg-black/40 p-2 rounded border border-white/5 hover:border-cyan-500/30 transition">
-              <img src="https://i.pravatar.cc/100?img=11" class="w-7 h-7 rounded-full border border-cyan-500 shadow-[0_0_5px_#22d3ee]">
-              <div class="flex-1 min-w-0">
-                <div class="text-[10px] text-cyan-400 font-bold">@TechExplorer <span class="text-gray-500 font-normal">· 2h ago</span></div>
-                <div class="text-xs text-gray-300 truncate">高原测试的数据太硬核了，期待基地的架构开源！</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-2 bg-black/40 p-2 rounded border border-white/5 hover:border-cyan-500/30 transition">
-              <img src="https://i.pravatar.cc/100?img=33" class="w-7 h-7 rounded-full border border-cyan-500 shadow-[0_0_5px_#22d3ee]">
-              <div class="flex-1 min-w-0">
-                <div class="text-[10px] text-cyan-400 font-bold">@MakerDaily <span class="text-gray-500 font-normal">· 5h ago</span></div>
-                <div class="text-xs text-gray-300 truncate">移动基地的算力集群设计很巧妙，J50和R2X搭配绝了。</div>
-              </div>
-            </div>
-            <div class="flex items-start gap-2 bg-black/40 p-2 rounded border border-white/5 hover:border-cyan-500/30 transition">
-              <img src="https://i.pravatar.cc/100?img=68" class="w-7 h-7 rounded-full border border-cyan-500 shadow-[0_0_5px_#22d3ee]">
-              <div class="flex-1 min-w-0">
-                <div class="text-[10px] text-cyan-400 font-bold">@NatureNomad <span class="text-gray-500 font-normal">· 1d ago</span></div>
-                <div class="text-xs text-gray-300 truncate">沿途的风光配合数据监控，真正的赛博朋克游牧感拉满！</div>
-              </div>
-            </div>
+          <div id="commentCarousel" class="flex flex-col gap-2 flex-1 justify-between z-10 overflow-hidden pr-1">
+            <!-- 动态渲染 -->
           </div>
         </div>
       </div>
@@ -1079,6 +1059,138 @@
     }
 
     initTempMonitors();
+
+    // Comment carousel
+    (function initCommentCarousel() {
+      const comments = [
+        { name: '张伟', text: '高原测试的数据太硬核了，期待基地的架构开源！' },
+        { name: '李明', text: '移动基地的算力集群设计很巧妙，J50和R2X搭配绝了。' },
+        { name: '王芳', text: '沿途的风光配合数据监控，真正的赛博朋克游牧感拉满！' },
+        { name: '刘洋', text: '柴火创客这次的公路之旅太酷了，强烈申请加入下一次！' },
+        { name: '陈静', text: '实时环境传感器数据让我大开眼界，科技感十足！' },
+        { name: '赵磊', text: '看到PM2.5和AQI数据同步更新，工程师太厉害了！' },
+        { name: '孙丽', text: '移动创客基地的概念真的很前沿，期待更多城市路线！' },
+        { name: '周鹏', text: '从深圳到高原，这趟旅程的技术含量让人叹服！' },
+        { name: '吴婷', text: '温度、湿度、气压全程监测，数据可视化做得很漂亮。' },
+        { name: '郑浩', text: '柴火的创客精神在这辆车上体现得淋漓尽致，点赞！' },
+        { name: '林晓', text: '地图上的实时轨迹看得我热血沸腾，快到我家来！' },
+        { name: '黄雪', text: '这就是我心目中的"移动实验室"，太羡慕创客们了。' },
+        { name: '徐强', text: '5G+算力集群+传感器，这个组合超乎想象，赞！' },
+        { name: '马辉', text: '每次刷新都能看到新数据，追着这辆车的行程真上瘾。' },
+        { name: '朱敏', text: '希望柴火能出一期技术分享，讲讲车载系统是怎么搭的。' },
+        { name: '谢天', text: '公路版创客空间，这个想法真的太浪漫了！' },
+        { name: '何丽', text: '跟着数据看风景，旅行有了全新的打开方式。' },
+        { name: '冯宇', text: '移动基地一路向北，数据一路向上，厉害了！' },
+        { name: '唐林', text: '期待未来能有更多城市加入轨迹，把中国跑遍！' },
+        { name: '蒋晴', text: '实时天气和空气质量同步，这个功能对旅行者太实用了。' },
+        { name: '韩博', text: '看到这个仪表盘，第一次觉得数据可以这么有温度。' },
+        { name: '曹倩', text: '柴火创客，你们让更多人看到了技术的诗意！' },
+        { name: '田昊', text: '车载AI+环境感知，这套方案完全可以推广到户外科考。' },
+        { name: '沈雨', text: '一路打卡城市，一路收集数据，双重满足感！' },
+        { name: '姜伟', text: '从海拔到气压，这辆车记录的不只是旅途，是历史。' },
+        { name: '夏妍', text: '强烈希望能线下参观这辆创客车，就算隔着屏幕都兴奋。' },
+        { name: '邱鹏', text: '地图轨迹更新的那一刻，感觉和柴火团队在一起出发了。' },
+        { name: '范彤', text: 'J50和R2X的组合听起来就很强，双节点算力很专业！' },
+        { name: '石磊', text: '这个仪表盘设计感满分，数据呈现既专业又好看。' },
+        { name: '许娜', text: '看了这个项目，我也想自己攒一台移动创客基地！' },
+        { name: '廖峰', text: '全程数据透明公开，这种开放精神值得所有团队学习。' },
+        { name: '熊杰', text: '高原上信号还能保持5G，工程师真的很拼！' },
+        { name: '龙静', text: '数据仪表盘像科幻片里的指挥中心，太帅了！' },
+        { name: '段飞', text: '柴火把创客文化带上了公路，这波操作我给满分！' },
+        { name: '钱洁', text: '看到城市到达时间记录，感受到了这次旅程的用心。' },
+        { name: '白浩', text: '移动实验室走到哪里，创新的种子就撒到哪里！' },
+        { name: '侯蕾', text: '有机会一定要来柴火，参观这辆神奇的创客车！' },
+        { name: '邓辉', text: '这次路线规划很有意思，期待下一段旅程的数据！' },
+        { name: '彭阳', text: '实时监控+历史轨迹，记录的是创客的奋斗路！' },
+        { name: '苏晨', text: '柴火加油！看着你们的轨迹，我也充满了动力！' },
+        { name: '汪浩', text: '这种把技术和旅行结合的方式，真的很有感染力。' },
+        { name: '卢洁', text: '仪表盘上每一个跳动的数据，都是团队心血的见证。' },
+        { name: '江涛', text: '一辆普通的车装上这些设备，立刻变成科技感爆棚的战车！' },
+        { name: '任鑫', text: '期待你们出周边，移动基地同款T恤我买！' },
+        { name: '丁帆', text: '每次看到城市切换，就想象团队又到了新的地方，很有趣。' },
+        { name: '魏平', text: '这趟旅程完成后，希望能出一份完整的技术报告！' },
+        { name: '薛勇', text: '双节点算力+实时传感，这已经是专业科考级别的配置了。' },
+        { name: '傅琳', text: '柴火这次出行，让更多人看到了创客的可能性，谢谢你们！' },
+        { name: '叶鹏', text: '地图上那条越来越长的轨迹线，让人心潮澎湃！' },
+        { name: '贺旭', text: '风速、风向也有监控，气象级别的数据采集，太专业！' },
+        { name: '秦雯', text: '一路向前，数据不断，柴火创客精神永远在线！' },
+        { name: '程远', text: '希望下次能有直播，跟着镜头感受移动基地的魅力！' },
+        { name: '潘慧', text: '这套系统如果开源，创客圈会炸的！期待！' },
+        { name: '孟帆', text: '看着实时数据，感觉自己也坐在那辆车上，很奇妙的体验。' },
+        { name: '尤晴', text: '从沿海到内陆，这条数据轨迹就是一部创客史诗！' },
+        { name: '戴鑫', text: '车载算力节点这个设计很超前，期待看到更多应用场景。' },
+        { name: '宋佳', text: '仪表盘配色很赛博朋克，既好看又实用，设计师赞！' },
+        { name: '方勇', text: '柴火这次出行给了我们很多灵感，感谢分享！' },
+        { name: '谭雪', text: '真心希望这个项目能持续更新，一直追随你们的旅程。' },
+        { name: '洪磊', text: '每一个城市到达时间背后，都是团队的努力和坚持！' },
+        { name: '乔静', text: '移动基地+开放数据，这就是创客精神最好的诠释。' },
+        { name: '蔡浩', text: '高原上的PM2.5数据出乎意料地好，大自然真的治愈！' },
+        { name: '邹丽', text: '超期待下一站是哪个城市，天天刷屏等更新！' },
+        { name: '覃威', text: '柴火移动基地走过的路，将来都是创客历史的一部分。' },
+        { name: '纪阳', text: '实时气压数据在高原跋涉时一定很有用，细节满满！' },
+        { name: '靳彤', text: '这辆车和它背后的数据，是技术与自然对话的最好方式。' },
+        { name: '翟鹏', text: '算力集群在移动环境中稳定运行，了不起的工程成就！' },
+        { name: '廉洁', text: '看到湿度和温度曲线，感受到了一路上天气的变化，真实！' },
+        { name: '殷浩', text: '柴火你们太棒了，让技术不再冷冰冰，充满了人情味！' },
+        { name: '池雨', text: '移动创客基地，未来可以开放预约体验吗？超想参与！' },
+        { name: '解明', text: '这次旅程的数据将来一定会成为很有价值的研究素材。' },
+        { name: '车博', text: '沿途城市的空气质量对比很有意思，继续收集！' },
+        { name: '欧阳霞', text: '双节点协同工作的架构设计，期待出技术博客详解！' },
+        { name: '司徒峰', text: '移动基地一路向前，带着技术的光，照亮每一座城市！' },
+        { name: '南宫婷', text: '跟着数据看中国，这是最酷的旅行方式！' },
+        { name: '上官磊', text: '柴火加油！期待更多精彩的技术实验在路上诞生！' },
+        { name: '诸葛浩', text: '实时仪表盘让每个关注者都成了这次旅程的见证者，太棒了！' },
+        { name: '公孙静', text: '从代码到山川，创客的足迹让技术有了诗意的延伸。' },
+        { name: '令狐峰', text: '每次打开页面都有新数据，这种实时感太有参与感了！' },
+        { name: '宇文辉', text: '移动基地是对"走出去"最生动的技术实践，点赞！' },
+        { name: '东方雪', text: '希望有一天能跟着柴火的移动基地一起出发，梦想！' },
+        { name: '慕容鹏', text: '传感器数据与地图联动，这个系统集成得相当优雅！' },
+        { name: '皇甫阳', text: '路过的每个城市都留下了数据印记，这就是最好的旅行笔记。' },
+        { name: '轩辕晴', text: '看到温度从平原到高原的变化曲线，直观又震撼！' },
+        { name: '澹台磊', text: '柴火创客，你们的行动证明了技术可以很有温度！' },
+        { name: '闻人霞', text: '仪表盘每次更新都像在看一部科技纪录片，停不下来！' },
+        { name: '夏侯威', text: '移动算力节点的实测数据很有参考价值，期待公开分享！' },
+        { name: '公羊浩', text: '高原、戈壁、平原，这辆车走过的是技术的诗和远方！' },
+        { name: '谷梁静', text: '每一个AQI数据背后都是一片真实的天空，很有感触。' },
+        { name: '百里阳', text: '柴火这次的数据项目，让更多人对创客文化产生了兴趣！' },
+        { name: '呼延磊', text: '移动基地不停歇，创客精神就不会停歇，加油！' },
+        { name: '羊舌峰', text: '期待这趟旅程结束后能有完整的纪录片，一定第一时间看！' },
+        { name: '微生婷', text: '柴火的每次行动都让人看到科技创新的无限可能，感谢！' },
+        { name: '梁丘洁', text: '一边开车一边采集数据，这就是真正的边走边研究！' },
+        { name: '赫连雪', text: '看到城市抵达时间更新的瞬间，感觉自己也在旅途中！' },
+        { name: '拓跋磊', text: '这个项目让我重新认识了"移动"的可能性，很受启发！' },
+        { name: '尉迟浩', text: '每次城市切换都是新的故事，柴火创客，继续前行！' },
+        { name: '完颜静', text: '数据背后是创客们对技术极致追求的热情，致敬！' },
+        { name: '独孤峰', text: '移动基地+开放仪表盘，这才是真正的"开源精神"！' },
+      ];
+
+      const container = document.getElementById('commentCarousel');
+      if (!container) return;
+      const VISIBLE = 3;
+      let offset = 0;
+      const avatarColors = ['0ea5e9','6366f1','10b981','f59e0b','ef4444','8b5cf6','ec4899','14b8a6'];
+
+      function render() {
+        container.innerHTML = '';
+        for (let i = 0; i < VISIBLE; i++) {
+          const c = comments[(offset + i) % comments.length];
+          const color = avatarColors[(offset + i) % avatarColors.length];
+          const div = document.createElement('div');
+          div.className = 'flex items-start gap-2 bg-black/40 p-2 rounded border border-white/5 hover:border-cyan-500/30 transition';
+          div.innerHTML = `
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=${color}&color=fff&size=100&bold=true" class="w-7 h-7 rounded-full border border-cyan-500 shadow-[0_0_5px_#22d3ee] flex-shrink-0">
+            <div class="flex-1 min-w-0">
+              <div class="text-[10px] text-cyan-400 font-bold">@${c.name}</div>
+              <div class="text-xs text-gray-300 truncate">${c.text}</div>
+            </div>`;
+          container.appendChild(div);
+        }
+        offset = (offset + 1) % comments.length;
+      }
+
+      render();
+      setInterval(render, 3000);
+    })();
 
     // Photo carousel
     (async function initPhotoCarousel() {
