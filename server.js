@@ -10,8 +10,20 @@ const CITY_PROVINCE_PATH = path.join(__dirname, 'city-province.json');
 
 const AQI_LABELS = { 1: '优', 2: '良', 3: '轻度', 4: '中度', 5: '重度' };
 
+const PHOTOS_DIR = path.join(__dirname, 'photos');
+const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
+
 // Serve static files (index.html, js, etc.)
 app.use(express.static(__dirname));
+
+// GET /api/photos — list images in photos/ directory
+app.get('/api/photos', (req, res) => {
+  if (!fs.existsSync(PHOTOS_DIR)) return res.json([]);
+  const files = fs.readdirSync(PHOTOS_DIR)
+    .filter(f => IMAGE_EXTS.has(path.extname(f).toLowerCase()))
+    .map(f => `/photos/${f}`);
+  res.json(files);
+});
 
 // GET /api/data — frontend polling endpoint
 app.get('/api/data', (req, res) => {

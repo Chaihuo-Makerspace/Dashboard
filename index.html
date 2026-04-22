@@ -367,19 +367,11 @@
         <div class="flex-1 glassy-frame p-3 flex flex-col relative overflow-hidden group">
           <div class="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-transparent z-0"></div>
           <div class="text-xs text-cyan-300/80 mb-2 z-10 flex justify-between items-center">
-            <span>线下照片轮播 (OFFLINE PHOTOS)</span>
+            <span>线下照片 (OFFLINE PHOTOS)</span>
             <i class="fas fa-camera text-gray-500"></i>
           </div>
-          <div class="flex gap-2 flex-1 items-center z-10">
-            <div class="flex-1 h-full rounded border border-white/10 overflow-hidden relative cursor-pointer hover:border-cyan-400 transition shadow-lg">
-              <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=200&q=80" class="w-full h-full object-cover opacity-60 hover:opacity-100 hover:scale-110 transition duration-500">
-            </div>
-            <div class="flex-1 h-full rounded border border-white/10 overflow-hidden relative cursor-pointer hover:border-cyan-400 transition shadow-lg">
-              <img src="https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?auto=format&fit=crop&w=200&q=80" class="w-full h-full object-cover opacity-60 hover:opacity-100 hover:scale-110 transition duration-500">
-            </div>
-            <div class="flex-1 h-full rounded border border-white/10 overflow-hidden relative cursor-pointer hover:border-cyan-400 transition shadow-lg">
-              <img src="https://picsum.photos/seed/chaihuo-offline-3/200/200" class="w-full h-full object-cover opacity-60 hover:opacity-100 hover:scale-110 transition duration-500">
-            </div>
+          <div id="photoCarousel" class="flex gap-2 flex-1 items-center z-10">
+            <!-- 动态渲染 -->
           </div>
         </div>
         
@@ -1087,6 +1079,29 @@
     }
 
     initTempMonitors();
+
+    // Photo carousel
+    (async function initPhotoCarousel() {
+      const container = document.getElementById('photoCarousel');
+      if (!container) return;
+      const photos = await fetch('/api/photos').then(r => r.json()).catch(() => []);
+      if (!photos.length) return;
+      const VISIBLE = 3;
+      let offset = 0;
+      function render() {
+        container.innerHTML = '';
+        for (let i = 0; i < VISIBLE; i++) {
+          const src = photos[(offset + i) % photos.length];
+          const div = document.createElement('div');
+          div.className = 'flex-1 h-full rounded border border-white/10 overflow-hidden cursor-pointer hover:border-cyan-400 transition shadow-lg';
+          div.innerHTML = `<img src="${src}" class="w-full h-full object-cover opacity-60 hover:opacity-100 hover:scale-110 transition duration-500">`;
+          container.appendChild(div);
+        }
+        offset = (offset + 1) % photos.length;
+      }
+      render();
+      setInterval(render, 4000);
+    })();
   </script>
 </body>
 </html>
