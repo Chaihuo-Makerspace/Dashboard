@@ -5,8 +5,11 @@ class MapAnimator {
   constructor(chartInstance, config) {
     this.chart = chartInstance;
     this.config = config;
+    this.visitedProvinces = new Set(JSON.parse(localStorage.getItem('visitedProvinces') || '[]'));
+    this.currentProvince = null;
     this.initChart();
     this.bindEvents();
+    if (this.visitedProvinces.size > 0) this._applyHighlights();
   }
 
   initChart() {
@@ -54,23 +57,29 @@ class MapAnimator {
     });
   }
 
-  highlightProvince(provinceName) {
-    this.chart.setOption({
-      geo: {
-        regions: provinceName
-          ? [{
-              name: provinceName,
-              itemStyle: {
-                areaColor: 'rgba(34, 211, 238, 0.45)',
-                borderColor: '#22d3ee',
-                shadowColor: '#22d3ee',
-                shadowBlur: 25
-              },
-              label: { color: '#fff', fontWeight: 'bold' }
-            }]
-          : []
-      }
+  _applyHighlights() {
+    const regions = [...this.visitedProvinces].map(name => {
+      const isCurrent = name === this.currentProvince;
+      return {
+        name,
+        itemStyle: {
+          areaColor: isCurrent ? 'rgba(34, 211, 238, 0.55)' : 'rgba(34, 211, 238, 0.28)',
+          borderColor: '#22d3ee',
+          shadowColor: '#22d3ee',
+          shadowBlur: isCurrent ? 25 : 10
+        },
+        label: { color: '#fff', fontWeight: 'bold' }
+      };
     });
+    this.chart.setOption({ geo: { regions } });
+  }
+
+  highlightProvince(provinceName) {
+    if (!provinceName) return;
+    this.currentProvince = provinceName;
+    this.visitedProvinces.add(provinceName);
+    localStorage.setItem('visitedProvinces', JSON.stringify([...this.visitedProvinces]));
+    this._applyHighlights();
   }
 
   bindEvents() {
