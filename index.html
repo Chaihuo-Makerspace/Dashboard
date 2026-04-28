@@ -211,6 +211,61 @@
     @media (max-width: 1680px) { .right-panel { --panel-scale: 0.95; } }
     @media (max-width: 1440px) { .right-panel { --panel-scale: 0.9; } }
     @media (max-width: 1280px) { .right-panel { --panel-scale: 0.85; } }
+
+    /* =============================================
+       响应式断点：笔记本屏幕自适应 (1280 ~ 1680px)
+       ============================================= */
+
+    /* 1680px：轻量调整 — gap/padding 缩减，状态卡略收窄 */
+    @media (max-width: 1680px) {
+      #dashboard {
+        gap: 1.2rem;
+        padding: 1.2rem 1.2rem 0.4rem 1.2rem;
+      }
+      .min-w-\[240px\] { min-width: 220px !important; }
+    }
+
+    /* 1440px：中等压缩 — 面板内边距、panel-title、大字体同步缩减 */
+    @media (max-width: 1440px) {
+      #dashboard {
+        gap: 0.9rem;
+        padding: 0.9rem 0.9rem 0.35rem 0.9rem;
+      }
+      /* 覆盖 Tailwind p-4（panel-merged 使用 p-3 且已有 scale(0.9)，故意排除） */
+      #dashboard > .panel.p-4 {
+        padding: 0.75rem !important;
+      }
+      .panel-title {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.6rem !important;
+        padding-bottom: 0.4rem !important;
+      }
+      /* 左上面板大数字（温度 text-4xl、气压/风速 text-3xl） */
+      #dashboard .panel-tl .text-4xl { font-size: 1.9rem !important; }
+      #dashboard .panel-tl .text-3xl { font-size: 1.5rem !important; }
+      .min-w-\[240px\] { min-width: 190px !important; }
+    }
+
+    /* 1280px：紧凑模式 — 中央列略宽，全面最小化间距和字体 */
+    @media (max-width: 1280px) {
+      #dashboard {
+        grid-template-columns: 2.8fr 6fr 2.8fr;
+        gap: 0.65rem;
+        padding: 0.65rem 0.65rem 0.3rem 0.65rem;
+      }
+      /* 覆盖 Tailwind p-4（panel-merged 使用 p-3 且已有 scale(0.85)，故意排除） */
+      #dashboard > .panel.p-4 {
+        padding: 0.6rem !important;
+      }
+      .panel-title {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.4rem !important;
+        padding-bottom: 0.3rem !important;
+      }
+      #dashboard .panel-tl .text-4xl { font-size: 1.6rem !important; }
+      #dashboard .panel-tl .text-3xl { font-size: 1.2rem !important; }
+      .min-w-\[240px\] { min-width: 165px !important; }
+    }
   </style>
 </head>
 <body>
