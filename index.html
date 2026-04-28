@@ -231,7 +231,7 @@
         gap: 0.9rem;
         padding: 0.9rem 0.9rem 0.35rem 0.9rem;
       }
-      /* 覆盖 Tailwind p-4（仅顶层 panel 直接子元素） */
+      /* 覆盖 Tailwind p-4（panel-merged 使用 p-3 且已有 scale(0.9)，故意排除） */
       #dashboard > .panel.p-4 {
         padding: 0.75rem !important;
       }
