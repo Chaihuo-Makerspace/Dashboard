@@ -95,7 +95,24 @@ docker run -d \
 **示例**
 
 ```bash
+# 本地开发（直接传中文即可）
 curl "http://localhost:3000/api/update?city=上海"
+
+# 线上/通过反向代理访问时，中文必须 URL 编码，否则代理会拒绝请求
+curl "https://your-domain.com/api/update?city=%E4%B8%8A%E6%B5%B7"
+```
+
+大多数 HTTP 库会自动处理编码，无需手动转换：
+
+```python
+# Python — requests 自动编码
+import requests
+requests.get("https://your-domain.com/api/update", params={"city": "上海"})
+```
+
+```javascript
+// JavaScript — encodeURIComponent 手动编码
+fetch(`https://your-domain.com/api/update?city=${encodeURIComponent("上海")}`);
 ```
 
 **成功响应** `200 OK`
