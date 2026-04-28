@@ -236,9 +236,9 @@
         padding: 0.75rem !important;
       }
       .panel-title {
-        font-size: 0.8rem;
-        margin-bottom: 0.6rem;
-        padding-bottom: 0.4rem;
+        font-size: 0.8rem !important;
+        margin-bottom: 0.6rem !important;
+        padding-bottom: 0.4rem !important;
       }
       /* 左上面板大数字（温度 text-4xl、气压/风速 text-3xl） */
       #dashboard .panel-tl .text-4xl { font-size: 1.9rem !important; }
@@ -253,14 +253,14 @@
         gap: 0.65rem;
         padding: 0.65rem 0.65rem 0.3rem 0.65rem;
       }
-      /* 覆盖 Tailwind p-4 */
+      /* 覆盖 Tailwind p-4（panel-merged 使用 p-3 且已有 scale(0.85)，故意排除） */
       #dashboard > .panel.p-4 {
         padding: 0.6rem !important;
       }
       .panel-title {
-        font-size: 0.75rem;
-        margin-bottom: 0.4rem;
-        padding-bottom: 0.3rem;
+        font-size: 0.75rem !important;
+        margin-bottom: 0.4rem !important;
+        padding-bottom: 0.3rem !important;
       }
       #dashboard .panel-tl .text-4xl { font-size: 1.6rem !important; }
       #dashboard .panel-tl .text-3xl { font-size: 1.2rem !important; }
